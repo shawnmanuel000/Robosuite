@@ -54,6 +54,8 @@ class MujocoEnv(metaclass=EnvMeta):
         camera_width=256,
         camera_depth=False,
     ):
+        render_collision_mesh = False
+        render_visual_mesh = True
         """
         Args:
 
@@ -156,7 +158,7 @@ class MujocoEnv(metaclass=EnvMeta):
         self.sim = MjSim(self.mjpy_model)
         self.initialize_time(self.control_freq)
 
-        #self.render_collision_mesh = False
+        self.render_collision_mesh = False
 
         # create visualization screen or renderer
         if self.has_renderer and self.viewer is None:

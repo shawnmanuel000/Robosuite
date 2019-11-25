@@ -29,6 +29,9 @@ class SawyerEnv(MujocoEnv):
         camera_width=256,
         camera_depth=False,
     ):
+        render_collision_mesh = False
+        render_visual_mesh = True
+
         """
         Args:
             gripper_type (str): type of gripper, used to instantiate
@@ -178,20 +181,20 @@ class SawyerEnv(MujocoEnv):
         Sets 3d position of indicator object to @pos.
         """
         base_pos_in_world = self.sim.data.get_body_xpos("base")
-        
+
         if self.use_indicator_object:
             index = self._ref_indicator_pos_low
             self.sim.data.qpos[index : index + 3] = (pos + base_pos_in_world)
 
     def _pre_action(self, action):
         """
-        Overrides the superclass method to actuate the robot with the 
+        Overrides the superclass method to actuate the robot with the
         passed joint velocities and gripper control.
 
         Args:
             action (numpy array): The control to apply to the robot. The first
-                @self.mujoco_robot.dof dimensions should be the desired 
-                normalized joint velocities and if the robot has 
+                @self.mujoco_robot.dof dimensions should be the desired
+                normalized joint velocities and if the robot has
                 a gripper, the next @self.gripper.dof dimensions should be
                 actuation controls for the gripper.
         """
@@ -206,10 +209,10 @@ class SawyerEnv(MujocoEnv):
                 self.mujoco_robot.dof : self.mujoco_robot.dof + self.gripper.dof
             ]
 
-            if gripper_action_in > 0:
-                gripper_action_in = [1]
-            else:
-                gripper_action_in = [-1]
+            #if gripper_action_in > 0:
+            #    gripper_action_in = [1]
+            #else:
+            #    gripper_action_in = [-1]
 
             gripper_action_actual = self.gripper.format_action(gripper_action_in)
             action = np.concatenate([arm_action, gripper_action_actual])

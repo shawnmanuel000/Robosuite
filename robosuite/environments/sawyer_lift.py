@@ -38,6 +38,9 @@ class SawyerLift(SawyerEnv):
         camera_width=256,
         camera_depth=False,
     ):
+        render_collision_mesh = False
+        render_visual_mesh = True
+
         """
         Args:
 
@@ -114,7 +117,7 @@ class SawyerLift(SawyerEnv):
                 x_range=[-0.03, 0.03],
                 y_range=[-0.03, 0.03],
                 ensure_object_boundary_in_range=False,
-                z_rotation=True,
+                z_rotation=None,
             )
 
         super().__init__(
@@ -195,6 +198,7 @@ class SawyerLift(SawyerEnv):
         # reset positions of objects
         self.model.place_objects()
 
+        self.cube_init_pos = self.sim.data.body_xpos[self.cube_body_id].copy()[2]
         # reset joint positions
         init_pos = np.array([-0.5538, -0.8208, 0.4155, 1.8409, -0.4955, 0.6482, 1.9628])
         init_pos += np.random.randn(init_pos.shape[0]) * 0.02
@@ -240,18 +244,44 @@ class SawyerLift(SawyerEnv):
             # grasping reward
             touch_left_finger = False
             touch_right_finger = False
+            left_pos = None
+            right_pos = None
             for i in range(self.sim.data.ncon):
                 c = self.sim.data.contact[i]
                 if c.geom1 in self.l_finger_geom_ids and c.geom2 == self.cube_geom_id:
                     touch_left_finger = True
+                    left_pos = c.pos[2]
                 if c.geom1 == self.cube_geom_id and c.geom2 in self.l_finger_geom_ids:
                     touch_left_finger = True
+                    left_pos = c.pos[2]
                 if c.geom1 in self.r_finger_geom_ids and c.geom2 == self.cube_geom_id:
                     touch_right_finger = True
+                    right_pos = c.pos[2]
                 if c.geom1 == self.cube_geom_id and c.geom2 in self.r_finger_geom_ids:
                     touch_right_finger = True
+                    right_pos = c.cpos[2]
             if touch_left_finger and touch_right_finger:
+
+                #if np.linalg.norm(right_pos - cube_pos[2]) < 0.02 and np.linalg.norm(left_pos - cube_pos[2]) < 0.02:
                 reward += 0.25
+                #reward += 0.125 * ( 1. - np.tanh(10.0 * (left_pos - cube_pos[2]))) + 0.125 * ( 1. - np.tanh(10.0 * (right_pos - cube_pos[2])))
+                """
+                cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
+                table_height = self.table_full_size[2]
+
+                #return cube_height > table_height + 0.04
+                dist = (self.cube_init_pos + 0.04) - cube_height
+                dist = max(0, dist)
+                #dist = np.abs(dist)
+                reward += 1. - np.tanh(10. * dist)
+                """
+                #cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
+                #table_height = self.table_full_size[2]
+
+                #target_height = table_height + 0.045
+                #height = np.abs(cube_height - target_height)
+                #lift_reward = 1. - np.tanh(10.0 * height)
+                #reward += lift_reward
 
         return reward
 
