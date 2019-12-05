@@ -1,8 +1,8 @@
 <mujoco model="table_arena">
   <asset>
-    <texture builtin="flat" height="480" rgb1="1 1 1" type="skybox" width="640"/>
-    <texture builtin="flat" height="512" name="texplane" rgb1="1 1 1" rgb2="1 1 1" type="2d" width="512"/>
-    <texture builtin="flat" height="512" name="textable" width="512" rgb1="0.6 0.6 0.6"/>
+    <texture builtin="flat" height="480" rgb1=".3 1 1" type="skybox" width="640"/>
+    <texture builtin="flat" height="512" name="texplane" rgb1="1 .1 1" rgb2=".2 1 .6" type="2d" width="512"/>
+    <texture builtin="flat" height="512" name="textable" width="512" rgb1="0.4 0.6 0.9"/>
     <material name="floorplane" texture="texplane" shininess="0"/>
     <material name="table_mat" texture="textable" />
     <material name="cube_mat" texture="textable" />

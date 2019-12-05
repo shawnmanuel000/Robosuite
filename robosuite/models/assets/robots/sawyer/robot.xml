@@ -105,21 +105,21 @@
               <geom name="right_l22" material="arm_mat" pos="0 0 0.08" rgba="0.5 0.1 0.1 1" size="0.06 0.17" type="cylinder"/>
               <body name="right_l3" pos="0 -0.042 0.26" quat="0.707107 -0.707107 0 0">
                 <inertial diaginertia="0.0102404 0.0096997 0.00369622" mass="2.5097" pos="-0.0048135 -0.0281 -0.084154" quat="0.902999 0.385391 -0.0880901 0.168247"/>
-                <joint axis="0 0 1" limited="true" name="right_j3" pos="0 0 0" range="-3.0439 3.0439"/>
+                <joint axis="0 0 1" limited="true" name="right_j3" pos="0 0 0" range="-3.0439 3.0439" damping="0.05"/>
                 <geom name="right_l31" material="arm_mat" conaffinity="0" contype="0" group="1" mesh="l3" rgba="0.5 0.1 0.1 1" type="mesh"/>
-                <geom name="right_l32" material="arm_mat" pos="0 -0.01 -0.12" rgba="0.5 0.1 0.1 1" size="0.06"/>
+                <geom name="right_l32" material="arm_mat" pos="0 -0.01 -0.12" rgba="0.5 0.8 0.1 1" size="0.06"/>
                 <body name="right_l4" pos="0 -0.125 -0.1265" quat="0.707107 0.707107 0 0">
                   <inertial diaginertia="0.0136549 0.0135493 0.00127353" mass="1.1136" pos="-0.0018844 0.0069001 0.1341" quat="0.803612 0.031257 -0.0298334 0.593582"/>
-                  <joint axis="0 0 1" limited="true" name="right_j4" pos="0 0 0" range="-2.9761 2.9761"/>
-                  <geom name="right_l41" material="arm_mat" conaffinity="0" contype="0" group="1" mesh="l4" rgba="0.5 0.1 0.1 1" type="mesh"/>
-                  <geom name="right_l42" material="arm_mat" pos="0 0 0.11" rgba="0.5 0.1 0.1 1" size="0.045 0.15" type="cylinder"/>
+                  <joint axis="0 0 1" limited="true" name="right_j4" pos="0 0 0" range="-2.9761 2.9761" damping="0.2"/>
+                  <geom name="right_l41" material="arm_mat" conaffinity="0" contype="0" group="1" mesh="l4" rgba="0.5 0.1 1 1" type="mesh"/>
+                  <geom name="right_l42" material="arm_mat" pos="0 0 0.11" rgba="1 0.1 0.1 1" size="0.045 0.15" type="cylinder"/>
                   <body name="right_arm_itb" pos="-0.055 0 0.075" quat="0.707107 0 -0.707107 0">
                     <inertial diaginertia="1e-08 1e-08 1e-08" mass="0.0001" pos="0 0 0"/>
                   </body>
                   <body name="right_l5" pos="0 0.031 0.275" quat="0.707107 -0.707107 0 0">
                     <inertial diaginertia="0.00474131 0.00422857 0.00190672" mass="1.5625" pos="0.0061133 -0.023697 0.076416" quat="0.404076 0.9135 0.0473125 0.00158335"/>
-                    <joint axis="0 0 1" limited="true" name="right_j5" pos="0 0 0" range="-2.9761 2.9761" damping="0.2"/>
-                    <geom name="right_l51" material="arm_mat" conaffinity="0" contype="0" group="1" mesh="l5" rgba="0.5 0.1 0.1 1" type="mesh"/>
+                    <joint axis="0 0 1" limited="true" name="right_j5" pos="0 0 0" range="-2.9761 2.9761" damping="0.4"/>
+                    <geom name="right_l51" material="arm_mat" conaffinity="0" contype="0" group="1" mesh="l5" rgba="0.8 0.1 1 1" type="mesh"/>
                     <geom name="right_l52" material="arm_mat" pos="0 0 0.1" rgba="0.5 0.1 0.1 1" size="0.06"/>
                     <body name="right_hand_camera" pos="0.039552 -0.033 0.0695" quat="0.707107 0 0.707107 0">
                       <inertial diaginertia="0 0 0" mass="0" pos="0.039552 -0.033 0.0695" quat="0.707107 0 0.707107 0"/>
@@ -129,9 +129,9 @@
                     </body>
                     <body name="right_l6" pos="0 -0.11 0.1053" quat="0.0616248 0.06163 -0.704416 0.704416">
                       <inertial diaginertia="0.000360258 0.000311068 0.000214974" mass="0.3292" pos="-8.0726e-06 0.0085838 -0.0049566" quat="0.479044 0.515636 -0.513069 0.491322"/>
-                      <joint axis="0 0 1" limited="true" name="right_j6" pos="0 0 0" range="-4.7124 4.7124" damping="0.1"/>
-                      <geom name="right_l61" material="arm_mat" conaffinity="0" contype="0" group="1" mesh="l6" rgba="0 0 0 1" type="mesh"/>
-                      <geom name="right_l62" material="arm_mat" pos="0 0.015 -0.01" rgba="0 0 0 1" size="0.055 0.025" type="cylinder"/>
+                      <joint axis="0 0 1" limited="true" name="right_j6" pos="0 0 0" range="-4.7124 4.7124" damping="0.2"/>
+                      <geom name="right_l61" material="arm_mat" conaffinity="0" contype="0" group="1" mesh="l6" rgba="1 0 0 1" type="mesh"/>
+                      <geom name="right_l62" material="arm_mat" pos="0 0.015 -0.01" rgba="0 1 .6 1" size="0.055 0.025" type="cylinder"/>
                       <body name="right_hand" pos="0 0 0.0245" quat="0.707105 0 0 0.707108">
                                               <!-- To add gripper -->
                                           </body>
