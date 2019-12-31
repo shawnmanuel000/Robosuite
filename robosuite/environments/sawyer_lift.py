@@ -9,6 +9,7 @@ from robosuite.models.objects import BoxObject
 from robosuite.models.robots import Sawyer
 from robosuite.models.tasks import TableTopTask, UniformRandomSampler
 
+from robosuite.utils.transform_utils import mat2quat
 
 class SawyerLift(SawyerEnv):
     """
@@ -236,10 +237,20 @@ class SawyerLift(SawyerEnv):
 
             # reaching reward
             cube_pos = self.sim.data.body_xpos[self.cube_body_id]
+
             gripper_site_pos = self.sim.data.site_xpos[self.eef_site_id]
             dist = np.linalg.norm(gripper_site_pos - cube_pos)
             reaching_reward = 1 - np.tanh(10.0 * dist)
-            reward += reaching_reward
+
+            cube_quat = convert_quat(
+                np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw"
+            )
+            #cube_quat = self.sim.data.body_xquat[self.cube_body_id]
+            gripper_mat = self.sim.data.site_xmat[self.eef_site_id].reshape((3,3))
+            gripper_quat = mat2quat(gripper_mat)
+
+            orientation_reward = 1. - np.square(np.dot(gripper_quat, cube_quat))
+            reward += 0.5 * reaching_reward + 0.5 * orientation_reward
 
             # grasping reward
             touch_left_finger = False
