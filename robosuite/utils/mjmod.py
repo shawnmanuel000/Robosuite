@@ -2,7 +2,6 @@ import os
 import copy
 import numpy as np
 from PIL import Image
-from torchvision import datasets
 from mujoco_py import modder
 
 
@@ -91,7 +90,7 @@ class CameraModder(modder.CameraModder):
           site in the location where the camera gaze is to be located.
     """
     def __init__(self, random_state=None, sim=None, \
-                 pos_ranges=[(-0.04, 0.04), (-0.04, 0.04), (-0.04, 0.04)],
+                 pos_ranges=[(-0.01, 0.01), (-0.01, 0.01), (-0.01, 0.01)],
                  axis=[0, 0, 1], angle_range=(-0.25, 0.25), \
                  camera_name=None, seed=None):
 
@@ -176,8 +175,8 @@ class TextureModder(modder.TextureModder):
     """
     def __init__(self, sim, seed=None, path=None):
         if seed is not None: np.random.seed(seed)
-        self.path = path
-        self.path ='/Users/aqua/Documents/workspace/svl/robosuite/robosuite/png-ZuBuD'
+        #self.path = path
+        self.path = '/home/robot/andrewk/png-ZuBuD'
         super().__init__(sim, random_state=seed)
 
     def whiten_materials(self, geom_names=None):
@@ -212,7 +211,14 @@ class TextureModder(modder.TextureModder):
         img_path = self.path + '/' + np.random.choice(os.listdir(self.path))
         img = Image.open(img_path).convert('RGB')
         img = img.convert('RGB')
+        if name == 'skybox':
+            img = img.resize((256, 256))
+        elif name =='table_visual':
+            img = img.resize((512, 512))
+        else:
+            img = img.resize((32, 32))
         img = np.array(img)
+        img = img.astype(np.uint8)
         img = np.concatenate([img] * int(bitmap.shape[0] / img.shape[0]), 0)
         img.resize(bitmap.shape)
         bitmap[..., :] = img
@@ -228,7 +234,8 @@ class TextureModder(modder.TextureModder):
             self.rand_noise,
         ]
 
-        if name == 'skybox':
+        #if name == 'skybox' or name == 'table_visual':
+        coin = np.random.uniform(0, 1)
+        if coin < 0.5:
             return self.set_existing_texture(name)
-
         return [choice(name) for choice in choices]
