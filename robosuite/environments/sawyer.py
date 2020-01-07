@@ -28,6 +28,7 @@ class SawyerEnv(MujocoEnv):
         camera_height=256,
         camera_width=256,
         camera_depth=False,
+        actuate_gripper=True,
     ):
         render_collision_mesh = False
         render_visual_mesh = True
@@ -79,6 +80,7 @@ class SawyerEnv(MujocoEnv):
         self.gripper_type = gripper_type
         self.gripper_visualization = gripper_visualization
         self.use_indicator_object = use_indicator_object
+        self.actuate_gripper = actuate_gripper
         super().__init__(
             has_renderer=has_renderer,
             has_offscreen_renderer=has_offscreen_renderer,
@@ -205,9 +207,13 @@ class SawyerEnv(MujocoEnv):
         action = np.clip(action, low, high)
         if self.has_gripper:
             arm_action = action[: self.mujoco_robot.dof]
-            gripper_action_in = action[
-                self.mujoco_robot.dof : self.mujoco_robot.dof + self.gripper.dof
-            ]
+
+            if self.actuate_gripper:
+                gripper_action_in = action[
+                    self.mujoco_robot.dof : self.mujoco_robot.dof + self.gripper.dof
+                ]
+            else:
+                gripper_action_in = [1]
 
             #if gripper_action_in > 0:
             #    gripper_action_in = [1]
@@ -299,7 +305,7 @@ class SawyerEnv(MujocoEnv):
         Returns the DoF of the robot (with grippers).
         """
         dof = self.mujoco_robot.dof
-        if self.has_gripper:
+        if self.has_gripper and self.actuate_gripper:
             dof += self.gripper.dof
         return dof
 
