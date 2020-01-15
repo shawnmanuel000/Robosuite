@@ -285,6 +285,13 @@ class SawyerCubeReach(SawyerEnv):
             cube_quat = convert_quat(
                 np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw"
             )
+            di['cube_pos'] = cube_pos
+            di['cube_quat'] = cube_quat
+            di['object-state'] = cube_pos[:2]
+            """
+            cube_quat = convert_quat(
+                np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw"
+            )
             di["cube_pos"] = cube_pos
             di["cube_quat"] = cube_quat
 
@@ -294,6 +301,7 @@ class SawyerCubeReach(SawyerEnv):
             di["object-state"] = np.concatenate(
                 [cube_pos, cube_quat, di["gripper_to_cube"]]
             )
+            """
 
         return di
 
