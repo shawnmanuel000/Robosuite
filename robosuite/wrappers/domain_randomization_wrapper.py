@@ -21,18 +21,19 @@ class DRWrapper(Wrapper):
         self.camera_modder =  CameraModder(sim=self.env.sim, camera_name=self.env.camera_name, seed=seed)
 
     def reset(self, seed=None):
-        super().reset()
-        self.set_seed(seed)
+        if seed is not None:
+            self.set_seed(seed)
+        return super().reset()
 
     def set_seed(self, seed=None):
         self.seed = int(seed)
         self.tex_modder = TextureModder(self.env.sim, seed=self.seed)
         self.light_modder = LightingModder(self.env.sim, seed=self.seed)
         self.mat_modder = MaterialModder(self.env.sim, seed=self.seed)
-        self.camera_modder =  CameraModder(sim=self.env.sim, camera_name=self.env.camera_name, seed=self.seed)
+        self.camera_modder = CameraModder(sim=self.env.sim, camera_name=self.env.camera_name, seed=self.seed)
 
     def step(self, action):
-        action += np.random.normal(scale=self.action_noise, size=action.shape)
+        #action += np.random.normal(scale=self.action_noise, size=action.shape)
         return super().step(action)
 
     def randomize_all(self):

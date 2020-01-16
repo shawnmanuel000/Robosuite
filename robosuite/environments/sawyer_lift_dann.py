@@ -11,7 +11,7 @@ from robosuite.models.tasks import TableTopTask, UniformRandomSampler
 
 from robosuite.utils.transform_utils import mat2quat
 
-class SawyerCubeReach(SawyerEnv):
+class SawyerDANNLift(SawyerEnv):
     """
     This class corresponds to the lifting task for the Sawyer robot arm.
     """
@@ -39,7 +39,7 @@ class SawyerCubeReach(SawyerEnv):
         camera_width=256,
         camera_depth=False,
     ):
-        render_collision_mesh = True
+        render_collision_mesh = False
         render_visual_mesh = True
 
         """
@@ -137,7 +137,6 @@ class SawyerCubeReach(SawyerEnv):
             camera_height=camera_height,
             camera_width=camera_width,
             camera_depth=camera_depth,
-            actuate_gripper=False,
         )
 
     def _load_model(self):
@@ -200,15 +199,11 @@ class SawyerCubeReach(SawyerEnv):
         # reset positions of objects
         self.model.place_objects()
 
-        ctrl_range = self.sim.model.actuator_ctrlrange
-        gripper_inds = self._ref_gripper_joint_pos_indexes
-
         self.cube_init_pos = self.sim.data.body_xpos[self.cube_body_id].copy()[2]
         # reset joint positions
         init_pos = np.array([-0.5538, -0.8208, 0.4155, 1.8409, -0.4955, 0.6482, 1.9628])
         init_pos += np.random.randn(init_pos.shape[0]) * 0.02
         self.sim.data.qpos[self._ref_joint_pos_indexes] = np.array(init_pos)
-        self.sim.data.qpos[gripper_inds] = np.array([-0.020833, 0.0115])
 
     def reward(self, action=None):
         """
@@ -247,7 +242,57 @@ class SawyerCubeReach(SawyerEnv):
             dist = np.linalg.norm(gripper_site_pos - cube_pos)
             reaching_reward = 1 - np.tanh(10.0 * dist)
 
-            reward += reaching_reward
+            cube_quat = convert_quat(
+                np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw"
+            )
+            #cube_quat = self.sim.data.body_xquat[self.cube_body_id]
+            gripper_mat = self.sim.data.site_xmat[self.eef_site_id].reshape((3,3))
+            gripper_quat = mat2quat(gripper_mat)
+
+            orientation_reward = 1. - np.square(np.dot(gripper_quat, cube_quat))
+            reward += 0.5 * reaching_reward + 0.5 * orientation_reward
+
+            # grasping reward
+            touch_left_finger = False
+            touch_right_finger = False
+            left_pos = None
+            right_pos = None
+            for i in range(self.sim.data.ncon):
+                c = self.sim.data.contact[i]
+                if c.geom1 in self.l_finger_geom_ids and c.geom2 == self.cube_geom_id:
+                    touch_left_finger = True
+                    left_pos = c.pos[2]
+                if c.geom1 == self.cube_geom_id and c.geom2 in self.l_finger_geom_ids:
+                    touch_left_finger = True
+                    left_pos = c.pos[2]
+                if c.geom1 in self.r_finger_geom_ids and c.geom2 == self.cube_geom_id:
+                    touch_right_finger = True
+                    right_pos = c.pos[2]
+                if c.geom1 == self.cube_geom_id and c.geom2 in self.r_finger_geom_ids:
+                    touch_right_finger = True
+                    right_pos = c.cpos[2]
+            if touch_left_finger and touch_right_finger:
+
+                #if np.linalg.norm(right_pos - cube_pos[2]) < 0.02 and np.linalg.norm(left_pos - cube_pos[2]) < 0.02:
+                reward += 0.25
+                #reward += 0.125 * ( 1. - np.tanh(10.0 * (left_pos - cube_pos[2]))) + 0.125 * ( 1. - np.tanh(10.0 * (right_pos - cube_pos[2])))
+                """
+                cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
+                table_height = self.table_full_size[2]
+
+                #return cube_height > table_height + 0.04
+                dist = (self.cube_init_pos + 0.04) - cube_height
+                dist = max(0, dist)
+                #dist = np.abs(dist)
+                reward += 1. - np.tanh(10. * dist)
+                """
+                #cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
+                #table_height = self.table_full_size[2]
+
+                #target_height = table_height + 0.045
+                #height = np.abs(cube_height - target_height)
+                #lift_reward = 1. - np.tanh(10.0 * height)
+                #reward += lift_reward
 
         return reward
 
@@ -279,8 +324,7 @@ class SawyerCubeReach(SawyerEnv):
                 di["image"] = camera_obs
 
         # low-level object information
-
-        if self.use_object_obs or True:
+        if self.use_object_obs:
             # position and rotation of object
             cube_pos = np.array(self.sim.data.body_xpos[self.cube_body_id])
             cube_quat = convert_quat(
@@ -295,12 +339,6 @@ class SawyerCubeReach(SawyerEnv):
             di["object-state"] = np.concatenate(
                 [cube_pos, cube_quat, di["gripper_to_cube"]]
             )
-        
-        # Modified for PPO model
-        di['robot-state'] = np.concatenate(
-            [np.sin(di["joint_pos"]), np.cos(di["joint_pos"]), di["gripper_qpos"], di["eef_pos"], di["eef_quat"]], 0
-        )
-        di['object-state'] = di["cube_pos"][:2]
 
         return di
 
@@ -309,7 +347,6 @@ class SawyerCubeReach(SawyerEnv):
         Returns True if gripper is in contact with an object.
         """
         collision = False
-        print('checked')
         for contact in self.sim.data.contact[: self.sim.data.ncon]:
             if (
                 self.sim.model.geom_id2name(contact.geom1)
@@ -325,19 +362,11 @@ class SawyerCubeReach(SawyerEnv):
         """
         Returns True if task has been completed.
         """
-        collision = False
-        for contact in self.sim.data.contact[: self.sim.data.ncon]:
-            if (
-                (self.sim.model.geom_id2name(contact.geom1)
-                in self.gripper.contact_geoms()
-                or self.sim.model.geom_id2name(contact.geom2)
-                in self.gripper.contact_geoms()) and
-                (self.sim.model.geom_id2name(contact.geom1) == 'cube' or
-                self.sim.model.geom_id2name(contact.geom2) == 'cube')
-            ):
-                collision = True
-                break
-        return collision
+        cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
+        table_height = self.table_full_size[2]
+
+        # cube is higher than the table top above a margin
+        return cube_height > table_height + 0.04
 
     def _gripper_visualization(self):
         """

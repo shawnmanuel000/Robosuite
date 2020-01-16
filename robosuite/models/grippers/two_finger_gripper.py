@@ -35,12 +35,18 @@ class TwoFingerGripperBase(Gripper):
 
     def contact_geoms(self):
         return [
+            "r_gripper_base1",
+            "r_gripper_base2",
+            "r_gripper_r_finger",
+            "r_gripper_l_finger",
             "r_finger_g0",
             "r_finger_g1",
             "l_finger_g0",
             "l_finger_g1",
             "r_fingertip_g0",
+            "r_fingertip_g1",
             "l_fingertip_g0",
+            "l_fingertip_g1",
         ]
 
     @property
