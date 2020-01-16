@@ -114,6 +114,7 @@ class SawyerEnv(MujocoEnv):
         """
         super()._reset_internal()
         self.sim.data.qpos[self._ref_joint_pos_indexes] = self.mujoco_robot.init_qpos
+        self.gripper_state = 0
 
         if self.has_gripper:
             self.sim.data.qpos[
@@ -212,6 +213,14 @@ class SawyerEnv(MujocoEnv):
                 gripper_action_in = action[
                     self.mujoco_robot.dof : self.mujoco_robot.dof + self.gripper.dof
                 ]
+                if gripper_action_in > 0:
+                    # close gripper
+                    self.close_gripper()
+                    gripper_action_in  = [1]
+                else:
+                    # open gripper
+                    self.open_gripper()
+                    gripper_action_in = [-1]
             else:
                 gripper_action_in = [1]
 
@@ -250,6 +259,12 @@ class SawyerEnv(MujocoEnv):
         self._gripper_visualization()
         return ret
 
+    def open_gripper(self):
+        self.gripper_state = 0
+
+    def close_gripper(self):
+        self.gripper_state = 1
+
     def _get_observation(self):
         """
         Returns an OrderedDict containing observations [(name_string, np.array), ...].
@@ -270,16 +285,19 @@ class SawyerEnv(MujocoEnv):
         robot_states = [
             np.sin(di["joint_pos"]),
             np.cos(di["joint_pos"]),
-            di["joint_vel"],
+            #di["joint_vel"],
         ]
 
         if self.has_gripper:
-            di["gripper_qpos"] = np.array(
-                [self.sim.data.qpos[x] for x in self._ref_gripper_joint_pos_indexes]
-            )
-            di["gripper_qvel"] = np.array(
-                [self.sim.data.qvel[x] for x in self._ref_gripper_joint_vel_indexes]
-            )
+
+            di['gripper_qpos'] = np.array([self.gripper_state])
+            #di["gripper_qpos"] = np.array(
+            #    [self.sim.data.qpos[x] for x in self._ref_gripper_joint_pos_indexes]
+            #)
+
+            #di["gripper_qvel"] = np.array(
+            #    [self.sim.data.qvel[x] for x in self._ref_gripper_joint_vel_indexes]
+            #)
 
             di["eef_pos"] = self._right_hand_pos
             di["eef_quat"] = self._right_hand_quat
