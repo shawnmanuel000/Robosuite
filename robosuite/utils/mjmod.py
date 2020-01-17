@@ -235,7 +235,7 @@ class TextureModder(modder.TextureModder):
         ]
 
         #if name == 'skybox' or name == 'table_visual':
-        coin = np.random.uniform(0, 1)
-        if coin < 0.5:
-            return self.set_existing_texture(name)
-        return [choice(name) for choice in choices]
+        #coin = np.random.uniform(0, 1)
+        #if coin < 0.5:
+        #    return self.set_existing_texture(name)
+        choices[np.random.randint(0, len(choices))](name)

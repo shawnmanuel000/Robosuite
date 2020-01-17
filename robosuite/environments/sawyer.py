@@ -203,7 +203,7 @@ class SawyerEnv(MujocoEnv):
         """
 
         # clip actions into valid range
-        assert len(action) == self.dof, "environment got invalid action dimension"
+        assert len(action) == self.dof, "environment got invalid action dimension {}, expected {}".format(len(action), self.dof)
         low, high = self.action_spec
         action = np.clip(action, low, high)
         if self.has_gripper:
