@@ -14,7 +14,7 @@ from robosuite.wrappers import Wrapper
 class IKWrapper(Wrapper):
     env = None
 
-    def __init__(self, env, action_repeat=1, markov_obs=False, finger_obs=False):
+    def __init__(self, env, action_repeat=1, markov_obs=False, finger_obs=False, abs_control=False):
         """
         Initializes the inverse kinematics wrapper.
         This wrapper allows for controlling the robot through end effector
@@ -48,6 +48,7 @@ class IKWrapper(Wrapper):
                 "control currently."
             )
 
+        self.abs_control = abs_control
         self.markov_obs = markov_obs
         self.finger_obs = finger_obs
         self.action_repeat = action_repeat
@@ -89,9 +90,25 @@ class IKWrapper(Wrapper):
                     touch_right_finger = 1
 
             ret['object-state'] = np.concatenate([ret['object-state'], np.array([touch_left_finger, touch_right_finger])])
- 
+
         self.controller.sync_state()
         return ret
+
+    def get_velocity(self, action):
+        input_1 = self._make_input(action[:7], self.env._right_hand_quat)
+        if self.env.mujoco_robot.name == "sawyer":
+            velocities = self.controller.get_control(**input_1)
+            low_action = np.concatenate([velocities, action[7:]])
+        elif self.env.mujoco_robot.name == "baxter":
+            input_2 = self._make_input(action[7:14], self.env._left_hand_quat)
+            velocities = self.controller.get_control(input_1, input_2)
+            low_action = np.concatenate([velocities, action[14:]])
+        else:
+            raise Exception(
+                "Only Sawyer and Baxter robot environments are supported for IK "
+                "control currently."
+            )
+        return low_action
 
     def step(self, action):
         """
@@ -113,19 +130,7 @@ class IKWrapper(Wrapper):
         # Make change in orientation none
         #action = np.hstack([action[:3], np.array([0, 0, 0, 1]), action[3]])
 
-        input_1 = self._make_input(action[:7], self.env._right_hand_quat)
-        if self.env.mujoco_robot.name == "sawyer":
-            velocities = self.controller.get_control(**input_1)
-            low_action = np.concatenate([velocities, action[7:]])
-        elif self.env.mujoco_robot.name == "baxter":
-            input_2 = self._make_input(action[7:14], self.env._left_hand_quat)
-            velocities = self.controller.get_control(input_1, input_2)
-            low_action = np.concatenate([velocities, action[14:]])
-        else:
-            raise Exception(
-                "Only Sawyer and Baxter robot environments are supported for IK "
-                "control currently."
-            )
+        low_action = self.get_velocity(action)
 
         # keep trying to reach the target in a closed-loop
         for i in range(self.action_repeat):
@@ -135,7 +140,7 @@ class IKWrapper(Wrapper):
                 low_action = np.concatenate([velocities, action[7:]])
             else:
                 low_action = np.concatenate([velocities, action[14:]])
-            
+
         # This is to append target position into obs space
         if self.markov_obs:
             ret[0]['object-state'] = np.concatenate([ret[0]['object-state'], self.controller.ik_robot_target_pos])
@@ -164,12 +169,18 @@ class IKWrapper(Wrapper):
         array. The first three elements are taken to be displacement in position, and a
         quaternion indicating the change in rotation with respect to @old_quat.
         """
+
+        if self.abs_control:
+            quat = action[3:7]
+        else:
+            quat = T.quat2mat(T.quat_multiply(old_quat, action[3:7]))
+        #old_quat = np.array([1, 0, 0, 0]) #np.concatenate([[old_quat[-1]], old_quat[1:]]) #, [old_quat[0]]])
         #action = np.hstack([action[:3], [0, 0, 0, 1], action[3]])
         return {
             "dpos": action[:3],
             # IK controller takes an absolute orientation in robot base frame
-            #"rotation": T.quat2mat(old_quat),
-            "rotation": T.quat2mat(T.quat_multiply(old_quat, action[3:7])),
+            "rotation": T.quat2mat(quat),
+            #"rotation": T.quat2mat(T.quat_multiply(old_quat, action[3:7])) #T.quat2mat(action[3:7]) #T.quat2mat(old_quat) #T.quat2mat(T.quat_multiply(old_quat, action[3:7])),
         }
 
     @property
@@ -179,4 +190,3 @@ class IKWrapper(Wrapper):
         """
         print('called dof')
         return 8
-
