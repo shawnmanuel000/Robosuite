@@ -213,6 +213,9 @@ class SawyerEnv(MujocoEnv):
                 gripper_action_in = action[
                     self.mujoco_robot.dof : self.mujoco_robot.dof + self.gripper.dof
                 ]
+
+                """
+                print(gripper_action_in)
                 if gripper_action_in > 0:
                     # close gripper
                     self.close_gripper()
@@ -221,6 +224,7 @@ class SawyerEnv(MujocoEnv):
                     # open gripper
                     self.open_gripper()
                     gripper_action_in = [-1]
+                """
             else:
                 gripper_action_in = [1]
 
@@ -290,10 +294,10 @@ class SawyerEnv(MujocoEnv):
 
         if self.has_gripper:
 
-            di['gripper_qpos'] = np.array([self.gripper_state])
-            #di["gripper_qpos"] = np.array(
-            #    [self.sim.data.qpos[x] for x in self._ref_gripper_joint_pos_indexes]
-            #)
+            #di['gripper_qpos'] = np.array([self.gripper_state])
+            di["gripper_qpos"] = np.array(
+                [self.sim.data.qpos[x] for x in self._ref_gripper_joint_pos_indexes[:1]]
+            )
 
             #di["gripper_qvel"] = np.array(
             #    [self.sim.data.qvel[x] for x in self._ref_gripper_joint_vel_indexes]
@@ -306,6 +310,8 @@ class SawyerEnv(MujocoEnv):
             robot_states.extend([di["gripper_qpos"], di["eef_pos"], di["eef_quat"]])
 
         di["robot-state"] = np.concatenate(robot_states)
+        assert np.all(np.isfinite(di['robot-state'])), di['robot-state']
+        #print(di['robot-state'])
         return di
 
     @property
