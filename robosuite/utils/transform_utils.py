@@ -10,6 +10,7 @@ import numpy as np
 
 PI = np.pi
 EPS = np.finfo(float).eps * 4.
+_EPS = EPS
 
 # axis sequences for Euler angles
 _NEXT_AXIS = [1, 2, 0, 1]
