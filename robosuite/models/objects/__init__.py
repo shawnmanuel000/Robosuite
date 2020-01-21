@@ -22,4 +22,6 @@ from .generated_objects import (
     CylinderObject,
     BallObject,
     CapsuleObject,
+    CupObject,
+    StandObject,
 )

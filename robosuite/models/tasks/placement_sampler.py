@@ -53,7 +53,7 @@ class UniformRandomSampler(ObjectPositionSampler):
             ensure_object_boundary_in_range:
                 True: The center of object is at position:
                      [uniform(min x_range + radius, max x_range - radius)], [uniform(min x_range + radius, max x_range - radius)]
-                False: 
+                False:
                     [uniform(min x_range, max x_range)], [uniform(min x_range, max x_range)]
             z_rotation:
                 None: Add uniform random random z-rotation
@@ -108,6 +108,18 @@ class UniformRandomSampler(ObjectPositionSampler):
             horizontal_radius = obj_mjcf.get_horizontal_radius()
             bottom_offset = obj_mjcf.get_bottom_offset()
             success = False
+
+            if obj_mjcf.__class__.__name__.startswith("Stand"):
+                pos = (
+                        self.table_top_offset
+                        - bottom_offset
+                        + obj_mjcf.stand_center
+                )
+                pos_arr.append(pos)
+                placed_objects.append((pos, horizontal_radius))
+                quat_arr.append(np.array([1, 0, 0, 0]))
+                continue
+
             for i in range(5000):  # 1000 retries
                 object_x = self.sample_x(horizontal_radius)
                 object_y = self.sample_y(horizontal_radius)
@@ -120,6 +132,7 @@ class UniformRandomSampler(ObjectPositionSampler):
                     ):
                         location_valid = False
                         break
+                location_valid = True
                 if location_valid:
                     # location is valid, put the object down
                     pos = (
@@ -165,7 +178,7 @@ class UniformRandomPegsSampler(ObjectPositionSampler):
             ensure_object_boundary_in_range:
                 True: The center of object is at position:
                      [uniform(min x_range + radius, max x_range - radius)], [uniform(min x_range + radius, max x_range - radius)]
-                False: 
+                False:
                     [uniform(min x_range, max x_range)], [uniform(min x_range, max x_range)]
             z_rotation:
                 Add random z-rotation
@@ -228,6 +241,7 @@ class UniformRandomPegsSampler(ObjectPositionSampler):
             horizontal_radius = obj_mjcf.get_horizontal_radius()
             bottom_offset = obj_mjcf.get_bottom_offset()
             success = False
+
             for i in range(5000):  # 1000 retries
                 if obj_name.startswith("SquareNut"):
                     x_range = [

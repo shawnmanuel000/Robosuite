@@ -28,6 +28,7 @@ class SawyerEnv(MujocoEnv):
         camera_height=256,
         camera_width=256,
         camera_depth=False,
+        actuate_gripper=True,
     ):
         render_collision_mesh = False
         render_visual_mesh = True
@@ -79,6 +80,7 @@ class SawyerEnv(MujocoEnv):
         self.gripper_type = gripper_type
         self.gripper_visualization = gripper_visualization
         self.use_indicator_object = use_indicator_object
+        self.actuate_gripper = actuate_gripper
         super().__init__(
             has_renderer=has_renderer,
             has_offscreen_renderer=has_offscreen_renderer,
@@ -205,9 +207,13 @@ class SawyerEnv(MujocoEnv):
         action = np.clip(action, low, high)
         if self.has_gripper:
             arm_action = action[: self.mujoco_robot.dof]
-            gripper_action_in = action[
-                self.mujoco_robot.dof : self.mujoco_robot.dof + self.gripper.dof
-            ]
+
+            if self.actuate_gripper:
+                gripper_action_in = action[
+                    self.mujoco_robot.dof : self.mujoco_robot.dof + self.gripper.dof
+                ]
+            else:
+                gripper_action_in = [-1]
 
             #if gripper_action_in > 0:
             #    gripper_action_in = [1]
@@ -276,10 +282,14 @@ class SawyerEnv(MujocoEnv):
             )
 
             di["eef_pos"] = self._right_hand_pos
-            di["eef_quat"] = self._right_hand_quat
-
+            di["eef_quat"] = self.sim.data.body_xquat[self.sim.model.body_name2id("right_hand")] #self._right_hand_quat
+            di["eef_quat"] = T.convert_quat(di["eef_quat"], to="xyzw")
+            di["eef_quat"] = T.quat_multiply(di["eef_quat"], np.array([1., 0, 0, 0]))
             # add in gripper information
-            robot_states.extend([di["gripper_qpos"], di["eef_pos"], di["eef_quat"]])
+            if self.actuate_gripper:
+                robot_states.extend([di["gripper_qpos"], di["eef_pos"], di["eef_quat"]])
+            else:
+                robot_states.extend([di["eef_pos"], di["eef_quat"]])
 
         di["robot-state"] = np.concatenate(robot_states)
         return di
@@ -299,7 +309,7 @@ class SawyerEnv(MujocoEnv):
         Returns the DoF of the robot (with grippers).
         """
         dof = self.mujoco_robot.dof
-        if self.has_gripper:
+        if self.has_gripper and self.actuate_gripper:
             dof += self.gripper.dof
         return dof
 

@@ -5,6 +5,220 @@ from robosuite.utils.mjcf_utils import new_body, new_geom, new_site
 from robosuite.utils.mjcf_utils import RED, GREEN, BLUE
 
 
+class StandObject(MujocoGeneratedObject):
+
+    def __init__(
+        self,
+        body_half_size=None,
+        radius=0.005,
+        height=0.1,
+        width=0.035,
+        rgba_body=None,
+    ):
+        super().__init__()
+
+        self.radius = radius
+        self.height = height
+        self.width = width
+        if rgba_body:
+            self.rgba_body = np.array(rgba_body)
+        else:
+            self.rgba_body = BLUE
+
+        self.stand_center = np.array([0, -0.1, 0])
+
+    def get_bottom_offset(self):
+        return np.array([0, 0, -1 * self.height / 2]) #-1 * self.height])
+
+    def get_top_offset(self):
+        return np.array([0, 0, self.height / 2])
+
+    def get_horizontal_radius(self):
+        return self.width + self.radius
+
+    def get_collision(self, name=None, site=None):
+        main_body = new_body()
+        if name is not None:
+            main_body.set("name", "stand")
+
+
+        main_bar_size = [
+            self.radius,
+            self.radius,
+            self.height * 1.3
+        ]
+        side_bar_size = [self.radius, self.width, self.radius]
+
+        main_body.append(
+            new_geom(
+                geom_type="box",
+                name="vertical",
+                pos=self.stand_center,
+                size=main_bar_size,
+                rgba=self.rgba_body,
+                group=1,
+            )
+        )
+        main_body.append(
+            new_geom(
+                geom_type="box",
+                name="crossbar",  # + for positive x
+                pos=self.stand_center + np.array([0, self.width - self.radius, self.height]),
+                size=side_bar_size,
+                rgba=self.rgba_body,
+                group=1,
+            )
+        )
+        main_body.append(
+            new_site(
+                name="stand_end",
+                rgba=self.rgba_body,
+                pos=self.stand_center + np.array([0, self.width * 2 - self.radius, self.height]),
+                size=[0.005],
+            )
+        )
+        main_body.append(
+            new_site(
+                name="stand_corner",
+                rgba=self.rgba_body,
+                pos=self.stand_center + np.array([0, 0, self.height]),
+                size=[0.005],
+            )
+        )
+
+        return main_body
+
+    def handle_geoms(self):
+        return ["handle_1_c", "handle_1_+", "handle_1_-"]
+
+
+    def get_visual(self, name=None, site=None):
+        return self.get_collision(name, site)
+
+
+class CupObject(MujocoGeneratedObject):
+
+    def __init__(
+        self,
+        body_half_size=None,
+        handle_radius=0.005,
+        handle_length=0.05,
+        handle_width=0.05,
+        rgba_body=None,
+        rgba_handle=None,
+        thickness=0.01,  # For body
+    ):
+        super().__init__()
+        if body_half_size:
+            self.body_half_size = body_half_size
+        else:
+            self.body_half_size = np.array([0.035, 0.035, 0.035])
+        self.thickness = thickness
+        self.handle_radius = handle_radius
+        self.handle_length = handle_length
+        self.handle_width = handle_width
+        if rgba_body:
+            self.rgba_body = np.array(rgba_body)
+        else:
+            self.rgba_body = RED
+        if rgba_handle:
+            self.rgba_handle = np.array(rgba_handle)
+        else:
+            self.rgba_handle = GREEN
+
+    def get_bottom_offset(self):
+        return np.array([0, 0, -1 * self.body_half_size[2]])
+
+    def get_top_offset(self):
+        return np.array([0, 0, self.body_half_size[2]])
+
+    def get_horizontal_radius(self):
+        return np.sqrt(2) * (max(self.body_half_size) + self.handle_length)
+
+    @property
+    def handle_distance(self):
+        return self.body_half_size[1] * 2 + self.handle_length * 2
+
+    def get_collision(self, name=None, site=None):
+        main_body = new_body()
+        if name is not None:
+            main_body.set("name", "cup")
+
+        for geom in five_sided_box(
+            self.body_half_size, self.rgba_body, 1, self.thickness
+        ):
+            main_body.append(geom)
+        handle_z = self.body_half_size[2] - self.handle_radius
+        handle_1_center = [0, self.body_half_size[1] + self.handle_length, self.handle_radius] #handle_z]
+
+        # the bar on handle horizontal to body
+        main_bar_size = [
+            self.handle_radius,
+            self.handle_radius,
+            self.handle_width / 2 + self.handle_radius,
+        ]
+        side_bar_size = [self.handle_radius, self.handle_length / 2, self.handle_radius]
+        handle_1 = new_body(name="handle_1")
+
+        handle_1.append(
+            new_geom(
+                geom_type="box",
+                name="handle_1_c",
+                pos=handle_1_center,
+                size=main_bar_size,
+                rgba=self.rgba_handle,
+                group=1,
+            )
+        )
+        handle_1.append(
+            new_geom(
+                geom_type="box",
+                name="handle_1_+",  # + for positive x
+                pos=[
+                    0, #self.handle_width / 2,
+                    self.body_half_size[1] + self.handle_length / 2,
+                    handle_z,
+                ],
+                size=side_bar_size,
+                rgba=self.rgba_handle,
+                group=1,
+            )
+        )
+        handle_1.append(
+            new_geom(
+                geom_type="box",
+                name="handle_1_-",
+                pos=[
+                    0, #-self.handle_width / 2,
+                    self.body_half_size[1] + self.handle_length / 2,
+                    self.body_half_size[1] - self.handle_length - self.handle_radius,
+#handle_z,
+                ],
+                size=side_bar_size,
+                rgba=self.rgba_handle,
+                group=1,
+            )
+        )
+        main_body.append(handle_1)
+        main_body.append(
+            new_site(
+                name="cup_handle",
+                rgba=self.rgba_handle,
+                pos=handle_1_center - np.array([0, self.handle_length / 2, 0]), # - np.array([0, 0.0025, 0]),
+                size=[0.005],
+            )
+        )
+        main_body.append(new_site(name="cup_center", pos=[0, 0, 0], rgba=self.rgba_body, size=[0.005]))
+
+        return main_body
+
+    def handle_geoms(self):
+        return ["handle_1_c", "handle_1_+", "handle_1_-"]
+
+
+    def get_visual(self, name=None, site=None):
+        return self.get_collision(name, site)
+
 class PotWithHandlesObject(MujocoGeneratedObject):
     """
     Generates the Pot object with side handles (used in BaxterLift)
@@ -136,7 +350,6 @@ class PotWithHandlesObject(MujocoGeneratedObject):
                     group=1,
                 )
             )
-
         handle_2 = new_body(name="handle_2")
         if self.solid_handle:
             handle_2.append(
@@ -192,7 +405,6 @@ class PotWithHandlesObject(MujocoGeneratedObject):
                     group=1,
                 )
             )
-
         main_body.append(handle_1)
         main_body.append(handle_2)
         main_body.append(

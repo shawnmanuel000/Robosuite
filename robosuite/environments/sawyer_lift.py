@@ -9,7 +9,7 @@ from robosuite.models.objects import BoxObject
 from robosuite.models.robots import Sawyer
 from robosuite.models.tasks import TableTopTask, UniformRandomSampler
 
-from robosuite.utils.transform_utils import mat2quat
+import robosuite.utils.transform_utils as T
 
 class SawyerLift(SawyerEnv):
     """
@@ -243,11 +243,16 @@ class SawyerLift(SawyerEnv):
             reaching_reward = 1 - np.tanh(10.0 * dist)
 
             cube_quat = convert_quat(
-                np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw"
+                np.array(self.sim.model.body_quat[self.cube_body_id]), to="xyzw"
             )
             #cube_quat = self.sim.data.body_xquat[self.cube_body_id]
-            gripper_mat = self.sim.data.site_xmat[self.eef_site_id].reshape((3,3))
-            gripper_quat = mat2quat(gripper_mat)
+            #gripper_quat = self.sim.model.body_quat[self.sim.model.body_name2id("right_hand")] #self._right_hand_quat
+            #gripper_quat = T.convert_quat(gripper_quat, to="xyzw")
+            #gripper_quat = T.quat_multiply(gripper_quat, T.quat_inverse(np.array([0,0,0.70710828,0.70710828])))
+
+            gripper_quat = self.sim.data.body_xquat[self.sim.model.body_name2id("right_hand")] #self._right_hand_quat
+            gripper_quat = T.convert_quat(gripper_quat, to="xyzw")
+            gripper_quat = T.quat_multiply(gripper_quat, np.array([1., 0, 0, 0]))
 
             orientation_reward = 1. - np.square(np.dot(gripper_quat, cube_quat))
             reward += 0.5 * reaching_reward + 0.5 * orientation_reward
@@ -327,6 +332,7 @@ class SawyerLift(SawyerEnv):
         if self.use_object_obs:
             # position and rotation of object
             cube_pos = np.array(self.sim.data.body_xpos[self.cube_body_id])
+            cube_quat = np.array(self.sim.data.body_xquat[self.cube_body_id])
             cube_quat = convert_quat(
                 np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw"
             )
