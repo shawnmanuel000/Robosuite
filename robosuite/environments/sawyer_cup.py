@@ -187,7 +187,9 @@ class SawyerCup(SawyerEnv):
         self.r_finger_geom_ids = [
             self.sim.model.geom_name2id(x) for x in self.gripper.right_finger_geoms
         ]
-        self.handle_geom_id = self.sim.model.geom_name2id("handle_1_c")
+        self.handle_upper_id = self.sim.model.geom_name2id("handle_1_+")
+        self.handle_lower_id = self.sim.model.geom_name2id("handle_1_-")
+
         self.handle_site_id = self.sim.model.site_name2id("cup_handle")
         self.cup_site_id = self.sim.model.site_name2id("cup_center")
         self.stand_end_id = self.sim.model.site_name2id("stand_end")
@@ -254,6 +256,20 @@ class SawyerCup(SawyerEnv):
             reaching_reward = min([l_finger_geom_dist, r_finger_geom_dist])
             #reaching_reward = np.clip(1 - np.tanh(10.0 * dist), 0., 0.95) / 0.95
 
+
+            handle_vec = self.sim.data.geom_xpos[self.handle_upper_id].copy() - self.sim.data.geom_xpos[self.handle_lower_id].copy()
+            handle_to_center_vec = self.sim.data.site_xpos[self.handle_site_id].copy() - self.sim.data.site_xpos[self.cup_site_id].copy()
+            handle_to_center_vec[-1] = 0.0
+
+            gripper_vec = self.sim.data.geom_xpos[self.l_finger_geom_ids] - self.sim.data.geom_xpos[self.r_finger_geom_ids]
+            gripper_vec = gripper_vec.mean(0)
+
+            vertical_orientation_reward = 1. - np.tanh(np.dot(handle_vec, gripper_vec))
+            perpendicular_orientation_reward = np.tanh(np.dot(gripper_vec, handle_to_center_vec))
+
+            orientation_reward = 0.5 * vertical_orientation_reward + 0.5 * perpendicular_orientation_reward
+
+            """
             gripper_quat = self.sim.data.body_xquat[self.sim.model.body_name2id("right_hand")]
             gripper_quat = T.convert_quat(gripper_quat, to="xyzw")
             gripper_quat = T.quat_multiply(gripper_quat, np.array([0, 1.0, 0, 0]))
@@ -261,12 +277,13 @@ class SawyerCup(SawyerEnv):
             cup_quat = convert_quat(
                 np.array(self.sim.data.body_xquat[self.cup_body_id]), to="xyzw"
             )
-            horizontal = np.array([0.7071067, 0, 0, 0.7071069])
+            horizontal = np.array([0, 0, 0.7071067, 0.7071069])
             horizontal = T.quat_multiply(cup_quat, horizontal)
 
             orientation_reward = 1. - (1. - np.square(np.dot(gripper_quat, horizontal)))
+            """
 
-            t = 0.2
+            t = 0.01
             reward += (1. - t) * reaching_reward + t * orientation_reward
 
             # grasping reward
@@ -275,13 +292,13 @@ class SawyerCup(SawyerEnv):
 
             for i in range(self.sim.data.ncon):
                 c = self.sim.data.contact[i]
-                if c.geom1 in self.l_finger_geom_ids and c.geom2 == self.handle_geom_id:
+                if c.geom1 in self.l_finger_geom_ids and c.geom2 == self.handle_upper_id:
                     touch_left_finger = True
-                if c.geom1 == self.handle_geom_id and c.geom2 in self.l_finger_geom_ids:
+                if c.geom1 == self.handle_upper_id and c.geom2 in self.l_finger_geom_ids:
                     touch_left_finger = True
-                if c.geom1 in self.r_finger_geom_ids and c.geom2 == self.handle_geom_id:
+                if c.geom1 in self.r_finger_geom_ids and c.geom2 == self.handle_upper_id:
                     touch_right_finger = True
-                if c.geom1 == self.handle_geom_id and c.geom2 in self.r_finger_geom_ids:
+                if c.geom1 == self.handle_upper_id and c.geom2 in self.r_finger_geom_ids:
                     touch_right_finger = True
             if touch_left_finger or touch_right_finger:
 

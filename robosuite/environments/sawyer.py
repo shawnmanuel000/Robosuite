@@ -284,7 +284,8 @@ class SawyerEnv(MujocoEnv):
             di["eef_pos"] = self._right_hand_pos
             di["eef_quat"] = self.sim.data.body_xquat[self.sim.model.body_name2id("right_hand")] #self._right_hand_quat
             di["eef_quat"] = T.convert_quat(di["eef_quat"], to="xyzw")
-            di["eef_quat"] = T.quat_multiply(di["eef_quat"], np.array([1., 0, 0, 0]))
+            di["eef_quat"] = T.quat_multiply(di["eef_quat"], np.array([0., 1., 0, 0]))
+
             # add in gripper information
             if self.actuate_gripper:
                 robot_states.extend([di["gripper_qpos"], di["eef_pos"], di["eef_quat"]])

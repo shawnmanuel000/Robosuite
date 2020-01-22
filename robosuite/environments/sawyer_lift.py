@@ -252,9 +252,9 @@ class SawyerLift(SawyerEnv):
 
             gripper_quat = self.sim.data.body_xquat[self.sim.model.body_name2id("right_hand")] #self._right_hand_quat
             gripper_quat = T.convert_quat(gripper_quat, to="xyzw")
-            gripper_quat = T.quat_multiply(gripper_quat, np.array([1., 0, 0, 0]))
+            gripper_quat = T.quat_multiply(gripper_quat, np.array([0., 1., 0, 0]))
 
-            orientation_reward = 1. - np.square(np.dot(gripper_quat, cube_quat))
+            orientation_reward = 1. - (1. - np.square(np.dot(gripper_quat, cube_quat)))
             reward += 0.5 * reaching_reward + 0.5 * orientation_reward
 
             # grasping reward
