@@ -9,7 +9,7 @@ from robosuite.models.objects import CupObject, StandObject
 from robosuite.models.robots import Sawyer
 from robosuite.models.tasks import TableTopTask, UniformRandomSampler
 
-from robosuite.utils.transform_utils import mat2quat
+import robosuite.utils.transform_utils as T
 
 class SawyerCup(SawyerEnv):
     """
@@ -243,10 +243,31 @@ class SawyerCup(SawyerEnv):
             gripper_site_pos = self.sim.data.site_xpos[self.eef_site_id]
             stand_pos = self.sim.data.site_xpos[self.stand_corner_id]
 
-            dist = np.linalg.norm(gripper_site_pos - cube_pos)
-            reaching_reward = np.clip(1 - np.tanh(10.0 * dist), 0., 0.95) / 0.95
+            l_finger_geom_pos = self.sim.data.geom_xpos[self.l_finger_geom_ids]
+            r_finger_geom_pos = self.sim.data.geom_xpos[self.r_finger_geom_ids]
 
-            reward += reaching_reward
+            dist = np.linalg.norm(gripper_site_pos - handle_pos)
+
+            l_finger_geom_dist = min([1. - np.tanh(10.0 * np.linalg.norm(handle_pos - l_finger_geom_pos[i])) for i in range(l_finger_geom_pos.shape[0])])
+            r_finger_geom_dist = min([1. - np.tanh(10.0 * np.linalg.norm(handle_pos - r_finger_geom_pos[i])) for i in range(r_finger_geom_pos.shape[0])])
+
+            reaching_reward = min([l_finger_geom_dist, r_finger_geom_dist])
+            #reaching_reward = np.clip(1 - np.tanh(10.0 * dist), 0., 0.95) / 0.95
+
+            gripper_quat = self.sim.data.body_xquat[self.sim.model.body_name2id("right_hand")]
+            gripper_quat = T.convert_quat(gripper_quat, to="xyzw")
+            gripper_quat = T.quat_multiply(gripper_quat, np.array([0, 1.0, 0, 0]))
+
+            cup_quat = convert_quat(
+                np.array(self.sim.data.body_xquat[self.cup_body_id]), to="xyzw"
+            )
+            horizontal = np.array([0.7071067, 0, 0, 0.7071069])
+            horizontal = T.quat_multiply(cup_quat, horizontal)
+
+            orientation_reward = 1. - (1. - np.square(np.dot(gripper_quat, horizontal)))
+
+            t = 0.2
+            reward += (1. - t) * reaching_reward + t * orientation_reward
 
             # grasping reward
             touch_left_finger = False

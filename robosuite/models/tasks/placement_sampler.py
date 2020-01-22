@@ -113,7 +113,7 @@ class UniformRandomSampler(ObjectPositionSampler):
                 pos = (
                         self.table_top_offset
                         - bottom_offset
-                        + obj_mjcf.stand_center
+                        + obj_mjcf.stand_center + np.array([self.sample_x(0.01), self.sample_y(0.01), 0])
                 )
                 pos_arr.append(pos)
                 placed_objects.append((pos, horizontal_radius))
