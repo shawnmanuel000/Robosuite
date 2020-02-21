@@ -203,7 +203,7 @@ class SawyerEnv(MujocoEnv):
             use_camera_obs=use_camera_obs,
             camera_name=camera_name,
             camera_height=camera_height,
-            camera_width=camera_height,
+            camera_width=camera_width,
             camera_depth=camera_depth,
             use_osc_controller=use_osc_controller,
             collect_osc_data=collect_osc_data,
