@@ -137,6 +137,7 @@ class SawyerPickPlace(SawyerEnv):
             self.object_id = self.object_to_id[
                 object_type
             ]  # use for convenient indexing
+
         self.obj_to_use = None
 
         # settings for table top
@@ -148,6 +149,8 @@ class SawyerPickPlace(SawyerEnv):
 
         # whether to use ground-truth object states
         self.use_object_obs = use_object_obs
+
+        self.last_action = None
 
         super().__init__(
             gripper_type=gripper_type,
