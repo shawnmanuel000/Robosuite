@@ -136,6 +136,8 @@ class SawyerEnv(MujocoEnv):
         osc_position_only=False,
         collect_osc_data=False,
         osc_raw_torques=False,
+        eval_mode=False,
+        perturb_evals=False,
     ):
         """
         Args:
@@ -192,6 +194,12 @@ class SawyerEnv(MujocoEnv):
             if not osc_raw_torques:
                 self.controller = make_controller(absolute=self.absolute_control, control_freq=control_freq, position_only=osc_position_only)
 
+        self.eval_mode = eval_mode
+        self.perturb_evals = perturb_evals
+        if self.eval_mode:
+            # replace placement initializer with one for consistent task evaluations!
+            self._get_placement_initializer_for_eval_mode()
+
         super().__init__(
             has_renderer=has_renderer,
             has_offscreen_renderer=has_offscreen_renderer,
@@ -208,6 +216,15 @@ class SawyerEnv(MujocoEnv):
             use_osc_controller=use_osc_controller,
             collect_osc_data=collect_osc_data,
         )
+
+    def _get_placement_initializer_for_eval_mode(self):
+        """
+        This method is used by subclasses to implement a 
+        placement initializer that is used to initialize the
+        environment into a fixed set of known task instances.
+        This is for reproducibility in policy evaluation.
+        """
+        raise Exception("Must implement this in subclass.")
 
     def _load_model(self):
         """
@@ -230,6 +247,7 @@ class SawyerEnv(MujocoEnv):
         Sets initial pose of arm and grippers.
         """
         super()._reset_internal()
+        self._has_interaction = False
         self.sim.data.qpos[self._ref_joint_pos_indexes] = self.mujoco_robot.init_qpos
 
         if self.has_gripper:
@@ -302,6 +320,13 @@ class SawyerEnv(MujocoEnv):
         if self.use_indicator_object:
             index = self._ref_indicator_pos_low
             self.sim.data.qpos[index : index + 3] = pos
+
+    def step(self, action):
+        if not self._has_interaction and self.eval_mode:
+            # this is the first step call of the episode
+            self.placement_initializer.increment_counter()
+        self._has_interaction = True
+        return super().step(action)
 
     def _pre_action(self, action, policy_step=None):
         """

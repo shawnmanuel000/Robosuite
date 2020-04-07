@@ -4,6 +4,9 @@ from .placement_sampler import (
     ObjectPositionSampler,
     UniformRandomSampler,
     UniformRandomPegsSampler,
+    UniformRandomBinsSampler,
+    RoundRobinSampler,
+    RoundRobinBinsSampler,
 )
 
 from .pick_place_task import PickPlaceTask

@@ -32,9 +32,7 @@ if __name__ == "__main__":
         has_renderer=True,
         ignore_done=True,
         use_camera_obs=False,
-        control_freq=20,#100,
-        use_osc_controller=True,
-        # absolute_control=True,
+        control_freq=100,
     )
     env.reset()
     env.viewer.set_camera(camera_id=0)
