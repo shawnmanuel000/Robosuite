@@ -495,13 +495,21 @@ class SawyerLiftPosition(SawyerLift):
         self,
         **kwargs
     ):
-        assert("placement_initializer" not in kwargs)
-        kwargs["placement_initializer"] = UniformRandomSampler(
-            x_range=[-0.03, 0.03],
-            y_range=[-0.03, 0.03],
-            ensure_object_boundary_in_range=False,
-            z_rotation=0.
-        )
+        # assert("placement_initializer" not in kwargs)
+        self.lowx = -0.1
+        self.highx = 0.2
+        self.lowy = -0.1
+        self.highy = 0.2
+        self.num_split = 5
+        if "placement_initializer" not in kwargs:
+            kwargs["placement_initializer"] = UniformRandomSampler(
+                # x_range=[-0.03, 0.03], # default
+                # y_range=[-0.03, 0.03],
+                x_range=[self.lowx, self.highx],
+                y_range=[self.lowy, self.highy],
+                ensure_object_boundary_in_range=False,
+                z_rotation=0.
+            )
         if kwargs["controller"] == "position_orientation":
             kwargs["controller"] = "position"
         super(SawyerLiftPosition, self).__init__(**kwargs)
@@ -514,8 +522,8 @@ class SawyerLiftPosition(SawyerLift):
         """
 
         # (low, high, number of grid points for this dimension)
-        x_bounds = (-0.03, 0.03, 3)
-        y_bounds = (-0.03, 0.03, 3)
+        x_bounds = (self.lowx, self.highx, self.num_split)
+        y_bounds = (self.lowy, self.highy, self.num_split)
         z_rot_bounds = (0., 0., 1)
         return x_bounds, y_bounds, z_rot_bounds
 
