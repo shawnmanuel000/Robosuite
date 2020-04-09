@@ -192,25 +192,17 @@ class Controller():
 
     def calculate_orientation_error(self, desired, current):
         """
-        Optimized function to determine orientation error
+        This function calculates a 3-dimensional orientation error vector for use in the
+        impedance controller. It does this by computing the delta rotation between the 
+        inputs and converting that rotation to exponential coordinates (axis-angle
+        representation, where the 3d vector is axis * angle). 
+
+        See https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation for more information.
         """
-
-        def cross_product(vec1, vec2):
-            S = np.array(([0, -vec1[2], vec1[1]],
-                          [vec1[2], 0, -vec1[0]],
-                          [-vec1[1], vec1[0], 0]))
-
-            return np.dot(S, vec2)
-
-        rc1 = current[0:3, 0]
-        rc2 = current[0:3, 1]
-        rc3 = current[0:3, 2]
-        rd1 = desired[0:3, 0]
-        rd2 = desired[0:3, 1]
-        rd3 = desired[0:3, 2]
-
-        orientation_error = 0.5 * (cross_product(rc1, rd1) + cross_product(rc2, rd2) + cross_product(rc3, rd3))
-
+        delta_rotation_mat = desired.dot(current.T)
+        delta_rotation_quat = T.mat2quat(delta_rotation_mat)
+        delta_rotation_axis, delta_rotation_angle = T.quat2axisangle(delta_rotation_quat)
+        orientation_error = T.axisangle2vec(axis=delta_rotation_axis, angle=delta_rotation_angle)
         return orientation_error
 
     def action_to_torques(self, action, policy_step):
@@ -677,10 +669,10 @@ class PositionOrientationController(Controller):
 
         if len(self.action_mask) > 3:
             assert force.shape[0] == 6
+
+            # this perturbation is computed assuming that the action space is
+            # axis-angle - (exponential coordinates)
             force[3:6] *= 10.
-
-            raise Exception("No support for force rotation yet!")
-
             kp = np.array(self.impedance_kp[3:6])
             mr_inv = scipy.linalg.inv(self.lambda_r_matrix)
             rot_perturb = mr_inv.dot(force[3:6]) / kp
@@ -779,7 +771,6 @@ class PositionOrientationController(Controller):
                 self.impedance_damping = action[self.damping_index[0]:self.damping_index[1]]
 
         position_error = self.last_goal_position - self.current_position
-        #print("Position err: {}".format(position_error))
         orientation_error = self.calculate_orientation_error(desired=self.last_goal_orientation,
                                                              current=self.current_orientation_mat)
 
@@ -895,8 +886,12 @@ class PositionOrientationController(Controller):
         if orientation is not None:
             self._goal_orientation = orientation
         else:
-            rotation_mat_error = T.euler2mat(-action[3:6])
-            self._goal_orientation = np.dot((rotation_mat_error).T, self.current_orientation_mat)
+            # interpret input as scaled axis-angle (exponential coordinates)
+            axis, angle = T.vec2axisangle(-action[3:6])
+            quat_error = T.axisangle2quat(axis=axis, angle=angle)
+            rotation_mat_error = T.quat2mat(quat_error)
+            self._goal_orientation = np.dot(rotation_mat_error.T, self.current_orientation_mat)
+
             if np.array(self.orientation_limits).any():
                 # TODO: Limit rotation!
                 euler = T.mat2euler(self._goal_orientation)

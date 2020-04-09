@@ -8,7 +8,8 @@ from robosuite.environments.sawyer import SawyerEnv
 import robosuite.utils.env_utils as EU
 
 from robosuite.models.arenas import TableArena
-from robosuite.models.objects import BoxObject
+from robosuite.models.objects import BoxObject, CylinderObject
+from robosuite.models.objects.interactive_objects import MaintainedButtonObject, MomentaryButtonObject
 from robosuite.models.robots import Sawyer
 from robosuite.models.tasks import TableTopTask, UniformRandomSampler, RoundRobinSampler, TableTopVisualTask
 import hjson
@@ -167,7 +168,7 @@ class SawyerLift(SawyerEnv):
         self.reward_shaping = reward_shaping
 
         # object placement initializer
-        if placement_initializer:
+        if placement_initializer is not None:
             self.placement_initializer = placement_initializer
         else:
             self.placement_initializer = UniformRandomSampler(
@@ -313,11 +314,6 @@ class SawyerLift(SawyerEnv):
             self.sim.model.geom_name2id(x) for x in self.gripper.right_finger_geoms
         ]
         self.cube_geom_id = self.sim.model.geom_name2id("cube")
-
-    def _get_body_addr(self, body_name):
-        body_id = self.sim.model.body_name2id(body_name)
-
-
 
     def _reset_internal(self):
         """
@@ -735,8 +731,6 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
     """
     def __init__(
         self,
-        object_name='cube',
-        target_name='cube_target',
         target_color=(0, 1, 0, 0.3),
         hide_target=True,
         goal_tolerance=0.05,
@@ -744,21 +738,49 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
         goal_radius_high=0.2,
         **kwargs
     ):
-        self._target_name = target_name
-        self._object_name = object_name
+
         self._target_rgba = target_color
         self._goal_render_segmentation = None
         self._goal_tolerance = goal_tolerance
         self._goal_radius_low = goal_radius_low
         self._goal_radius_high = goal_radius_high
         self._goal_grid = None
-        if kwargs.get('eval_mode', False) or hide_target:
-            self._target_rgba = (0., 0., 0., 0.,)
+        self._hide_target = hide_target
+
+        self._target_name = 'cube_target'
+        self._object_name = 'cube'
+        self.interactive_objects = {}
 
         super().__init__(**kwargs)
 
     def _load_model(self):
         super()._load_model()
+
+        cube = BoxObject(
+            size_min=[0.020, 0.020, 0.020],  # [0.015, 0.015, 0.015],
+            size_max=[0.020, 0.020, 0.020],  # [0.018, 0.018, 0.018])
+            rgba=[1, 0, 0, 1],
+        )
+
+        cube1 = BoxObject(
+            size_min=[0.020, 0.020, 0.020],  # [0.015, 0.015, 0.015],
+            size_max=[0.020, 0.020, 0.020],  # [0.018, 0.018, 0.018])
+            rgba=[0, 0, 1, 1]
+        )
+
+        slide_joint = dict(
+            pos="0 0 0",
+            axis="0 0 1",
+            type="slide",
+            springref="1",
+            limited="true",
+            stiffness="0.5",
+            range="-0.1 0",
+            damping="1"
+        )
+        button = CylinderObject(rgba=(1, 0, 0, 1), size=[0.03, 0.01], joint=slide_joint)
+
+        self.mujoco_objects = OrderedDict([(self._object_name, cube), ("cube1", cube1), ("button", button)])
 
         # target visual object
         target_size = np.array(self.mujoco_objects[self._object_name].size)
@@ -789,6 +811,23 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
         target_qvel = self.sim.model.get_joint_qvel_addr(self._target_name)
         self._ref_target_pos_low, self._ref_target_pos_high = target_qpos
         self._ref_target_vel_low, self._ref_target_vel_high = target_qvel
+        button = MomentaryButtonObject(self.sim, body_id=self.sim.model.body_name2id("button"), on_rgba=(0, 1, 0, 1))
+
+        def color_trigger(sim, body_id, color):
+            for gid in EU.bodyid2geomids(sim, body_id):
+                self.sim.model.geom_rgba[gid] = color
+
+        button.add_on_state_funcs(
+            cond={button.state_name: True},
+            func=lambda: color_trigger(sim=self.sim, body_id=self.object_body_id, color=(0, 1, 0, 1))
+        )
+
+        button.add_on_state_funcs(
+            cond={button.state_name: False},
+            func=lambda: color_trigger(sim=self.sim, body_id=self.object_body_id, color=(1, 0, 0, 1))
+        )
+
+        self.interactive_objects['button'] = button
 
     def _get_placement_initializer_for_eval_mode(self):
         super(SawyerLiftPositionTarget, self)._get_placement_initializer_for_eval_mode()
@@ -822,10 +861,11 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
 
         # reset joint positions
         init_pos = np.array([-0.5538, -0.8208, 0.4155, 1.8409, -0.4955, 0.6482, 1.9628])
-        init_pos += np.random.randn(init_pos.shape[0]) * 0.02
+        # init_pos += np.random.randn(init_pos.shape[0]) * 0.02
         self.sim.data.qpos[self._ref_joint_pos_indexes] = np.array(init_pos)
 
         # for now, place target randomly in a radius of 0.2 around current cube pos
+
         cube_pos = np.array(self.sim.data.body_xpos[self.cube_body_id])
         if self._goal_grid is not None:
             radius, angle, z_rot = self._goal_grid[self.placement_initializer.counter]
@@ -834,10 +874,22 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
             radius = np.random.uniform(self._goal_radius_low, self._goal_radius_high)
         assert(radius > self._goal_tolerance)
 
-        cube_pos[0] += radius * np.cos(angle)
-        cube_pos[1] += radius * np.sin(angle)
-        print(cube_pos)
-        self._set_target(pos=cube_pos)
+        target_pos = cube_pos.copy()
+        target_pos[0] += radius * np.cos(angle)
+        target_pos[1] += radius * np.sin(angle)
+        self._set_target(pos=target_pos)
+        for _, o in self.interactive_objects.items():
+            o.reset()
+
+        if self.eval_mode or self._hide_target:
+            self.hide_target()
+
+    def step(self, action):
+        for _, o in self.interactive_objects.items():
+            o.step(sim_step=self.timestep)
+        super(SawyerLiftPositionTarget, self).step(action)
+        if self.eval_mode or self._hide_target:
+            self.hide_target()
 
     def _pre_action(self, action, policy_step=None):
         super()._pre_action(action, policy_step=policy_step)
@@ -855,13 +907,14 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
         Quaternion should be (x, y, z, w).
         """
         EU.set_body_pose(self.sim, self._target_name, pos=pos, quat=quat)
-        # self._target_pos = pos.copy()
-        # self._target_quat = old_quat
         self.sim.forward()
 
     def hide_target(self):
         """make the target transparent for rendering"""
-        self.sim.model.geom_rgba[EU.bodyid2geomids(self.sim, self.target_body_id)[0]] = np.array([0., 0., 0., 0.])
+        self.sim.model.geom_rgba[EU.bodyid2geomids(self.sim, self.target_body_id)[0]][-1] = 0.0
+
+    def show_target(self):
+        self.sim.model.geom_rgba[EU.bodyid2geomids(self.sim, self.target_body_id)[0]][-1] = 0.3
 
     @property
     def target_pos(self):
@@ -883,6 +936,14 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
     def _set_goal_rendering(self, _):
         pass
 
+    def _set_state_to_goal(self):
+        """Set the environment to a goal state"""
+        # set cube to target position
+        tgt_pos = self.sim.data.body_xpos[self.target_body_id]
+        tgt_quat = self.sim.data.body_xquat[self.target_body_id]
+        EU.set_body_pose(self.sim, self._object_name, pos=tgt_pos, quat=tgt_quat)
+        self.sim.forward()
+
     def _get_goal(self):
         """
         Get goal observation by moving object to the target, get obs, and move back.
@@ -891,39 +952,17 @@ class SawyerLiftPositionTarget(SawyerLiftPosition):
         # avoid generating goal obs every time
         if self._goal_dict is not None:
             return self._goal_dict
-        assert(self._target_rgba[-1] == 0)  # make sure the target is hidden
-        # set cube to target position
-        tgt_pos = self.sim.data.body_xpos[self.target_body_id]
-        tgt_quat = self.sim.data.body_xquat[self.target_body_id]
-        obj_pos, obj_quat = EU.set_body_pose(self.sim, self._object_name, pos=tgt_pos, quat=tgt_quat)
-        self.sim.forward()
 
-        # get obs
-        self._goal_dict = deepcopy(self._get_observation())
+        with EU.world_saved(self.sim):
+            self._set_state_to_goal()
+            self._goal_dict = deepcopy(self._get_observation())
 
-        # set object back to initial pose
-        EU.set_body_pose(self.sim, self._object_name, pos=obj_pos, quat=obj_quat)
-        self.sim.forward()
         return self._goal_dict
 
-    def render_with_goal(self, width, height, camera_name):
-        im = self.sim.render(height=height, width=width, camera_name=camera_name)[::-1]
-
-        if self._goal_render_segmentation is None:
-            # get a segmentation of the goal state
-            tgt_pos = self.sim.data.body_xpos[self.target_body_id]
-            tgt_quat = self.sim.data.body_xquat[self.target_body_id]
-            obj_pos, obj_quat = EU.set_body_pose(self.sim, self._object_name, pos=tgt_pos, quat=tgt_quat)
-            self.sim.forward()
-
-            self._goal_render_segmentation = self.render_segmentation(
-                camera_name=camera_name, camera_width=width, camera_height=width)[::-1]
-            EU.set_body_pose(self.sim, self._object_name, pos=obj_pos, quat=obj_quat)
-            self.sim.forward()
-
-        # compose image with goal
-        seg_mask = (self._goal_render_segmentation == EU.bodyid2geomids(self.sim, self.object_body_id)[0])
-        im[seg_mask] = [0, 255, 0]
+    def render_with_visual_target(self, width, height, camera_name):
+        self.show_target()
+        im = self.sim.render(height=height, width=width, camera_name=camera_name)[::-1].copy()
+        self.hide_target()
         return im
 
     def _check_success(self):
