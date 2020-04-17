@@ -340,6 +340,7 @@ class SawyerEnv(MujocoEnv):
                 a gripper, the next @self.gripper.dof dimensions should be
                 actuation controls for the gripper.
         """
+        self.last_action = action
 
         # clip actions into valid range
         assert len(action) == self.dof, "environment got invalid action dimension"
