@@ -40,7 +40,7 @@ if __name__ == "__main__":
         use_camera_obs=False,
         control_freq=100,
         eval_mode=True,
-        perturb_evals=True,
+        perturb_evals=False,
     )
 
     # write a video

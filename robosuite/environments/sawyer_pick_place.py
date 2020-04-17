@@ -762,9 +762,9 @@ class SawyerPickPlaceCan(SawyerPickPlace):
         """
 
         # (low, high, number of grid points for this dimension)
-        x_bounds = (-0.12, 0.12, 4)
-        y_bounds = (-0.17, 0.17, 4)
-        z_rot_bounds = (0., 2. * np.pi, 2)
+        x_bounds = (-0.03, 0.03, 2)
+        y_bounds = (-0.03, 0.03, 2)
+        z_rot_bounds = (0., 2. * np.pi, 1)
         name = "can"
         return x_bounds, y_bounds, z_rot_bounds, name
 
