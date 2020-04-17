@@ -334,9 +334,10 @@ class UniformRandomBinsSampler(ObjectPositionSampler):
         super().setup(mujoco_objects, table_top_offset, table_size)
         self.object_order = [mjcf.name for mjcf in self.mujoco_objects]
 
-    def sample_x(self, object_horizontal_radius, name):
+    def sample_x(self, object_horizontal_radius, name=None):
+        # when name is passed, assume that we want default behavior (used by RoundRobinBinsSampler)
         x_range = self.x_range
-        if x_range is None:
+        if x_range is None or name is not None:
             x_lim = self.table_size[0] / 2 - 0.05
             x_range = [-x_lim, x_lim]
         minimum = min(x_range)
@@ -346,9 +347,10 @@ class UniformRandomBinsSampler(ObjectPositionSampler):
             maximum -= object_horizontal_radius
         return np.random.uniform(high=maximum, low=minimum)
 
-    def sample_y(self, object_horizontal_radius, name):
+    def sample_y(self, object_horizontal_radius, name=None):
+        # when name is passed, assume that we want default behavior (used by RoundRobinBinsSampler)
         y_range = self.y_range
-        if y_range is None:
+        if y_range is None or name is not None:
             y_lim = self.table_size[1] / 2 - 0.05
             y_range = [-y_lim, y_lim]
         minimum = min(y_range)
@@ -358,8 +360,9 @@ class UniformRandomBinsSampler(ObjectPositionSampler):
             maximum -= object_horizontal_radius
         return np.random.uniform(high=maximum, low=minimum)
 
-    def sample_quat(self, name):
-        if self.z_rotation is None:
+    def sample_quat(self, name=None):
+        # when name is passed, assume that we want default behavior (used by RoundRobinBinsSampler)
+        if self.z_rotation is None or name is not None:
             rot_angle = np.random.uniform(high=2 * np.pi, low=0)
         elif isinstance(self.z_rotation, collections.Iterable):
             rot_angle = np.random.uniform(
