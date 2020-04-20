@@ -38,7 +38,6 @@ class EnvMeta(type):
 
 class MujocoEnv(metaclass=EnvMeta):
     """Initializes a Mujoco Environment."""
-
     def __init__(
         self,
         has_renderer=False,
@@ -52,26 +51,13 @@ class MujocoEnv(metaclass=EnvMeta):
     ):
         """
         Args:
-
-            has_renderer (bool): If true, render the simulation state in 
-                a viewer instead of headless mode.
-
+            has_renderer (bool): If true, render the simulation state in a viewer instead of headless mode.
             has_offscreen_renderer (bool): True if using off-screen rendering.
-
             render_camera (str): Name of camera to render if `has_renderer` is True.
-
-            render_collision_mesh (bool): True if rendering collision meshes 
-                in camera. False otherwise.
-
-            render_visual_mesh (bool): True if rendering visual meshes 
-                in camera. False otherwise.
-
-            control_freq (float): how many control signals to receive 
-                in every simulated second. This sets the amount of simulation time 
-                that passes between every action input.
-
+            render_collision_mesh (bool): True if rendering collision meshes in camera. False otherwise.
+            render_visual_mesh (bool): True if rendering visual meshes in camera. False otherwise.
+            control_freq (float): how many control signals to receive in every simulated second. This sets the amount of simulation time that passes between every action input.
             horizon (int): Every episode lasts for exactly @horizon timesteps.
-
             ignore_done (bool): True if never terminating the environment (ignore @horizon).
         """
         # Rendering-specific attributes
