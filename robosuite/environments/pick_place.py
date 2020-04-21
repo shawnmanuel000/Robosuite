@@ -2,25 +2,25 @@ from collections import OrderedDict
 import random
 import numpy as np
 
-import robosuite.utils.transform_utils as T
-from robosuite.utils.mjcf_utils import string_to_array
-from robosuite.environments.robot_env import RobotEnv
-from robosuite.robots import SingleArm
+from ..utils import transform_utils as T
+from ..utils.mjcf_utils import string_to_array
+from .robot_env import RobotEnv
+from ..robots import SingleArm
 
-from robosuite.models.arenas import BinsArena
-from robosuite.models.objects import (
+from ..models.arenas import BinsArena
+from ..models.objects import (
     MilkObject,
     BreadObject,
     CerealObject,
     CanObject,
 )
-from robosuite.models.objects import (
+from ..models.objects import (
     MilkVisualObject,
     BreadVisualObject,
     CerealVisualObject,
     CanVisualObject,
 )
-from robosuite.models.tasks import PickPlaceTask
+from ..models.tasks import PickPlaceTask
 
 
 class PickPlace(RobotEnv):

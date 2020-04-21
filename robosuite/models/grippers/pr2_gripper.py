@@ -2,8 +2,8 @@
     4 dof gripper with two fingers and its open/close variant
 """
 import numpy as np
-from robosuite.utils.mjcf_utils import xml_path_completion
-from robosuite.models.grippers.gripper_model import GripperModel
+from ...utils.mjcf_utils import xml_path_completion
+from .gripper_model import GripperModel
 
 
 class PR2GripperBase(GripperModel):

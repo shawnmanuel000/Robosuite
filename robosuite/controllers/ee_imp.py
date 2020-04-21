@@ -1,6 +1,6 @@
-from robosuite.controllers.base_controller import Controller
-from robosuite.utils.control_utils import *
-import robosuite.utils.transform_utils as T
+from .base_controller import Controller
+from ..utils.control_utils import *
+from ..utils import transform_utils as T
 import numpy as np
 from collections.abc import Iterable
 

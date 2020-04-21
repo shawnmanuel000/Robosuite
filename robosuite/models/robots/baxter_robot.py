@@ -1,6 +1,6 @@
 import numpy as np
-from robosuite.models.robots.robot_model import RobotModel
-from robosuite.utils.mjcf_utils import xml_path_completion
+from .robot_model import RobotModel
+from ...utils.mjcf_utils import xml_path_completion
 
 
 class Baxter(RobotModel):

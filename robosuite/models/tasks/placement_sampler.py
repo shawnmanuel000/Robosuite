@@ -1,7 +1,7 @@
 import collections
 import numpy as np
 
-from robosuite.utils import RandomizationError
+from ...utils import RandomizationError
 
 
 class ObjectPositionSampler:

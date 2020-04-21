@@ -1,4 +1,4 @@
-from robosuite.models.world import MujocoWorldBase
+from ..world import MujocoWorldBase
 
 
 class Task(MujocoWorldBase):

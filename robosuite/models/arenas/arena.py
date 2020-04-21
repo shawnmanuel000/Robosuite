@@ -1,8 +1,8 @@
 import numpy as np
 
-from robosuite.models.base import MujocoXML
-from robosuite.utils.mjcf_utils import array_to_string, string_to_array
-from robosuite.utils.mjcf_utils import new_geom, new_body, new_joint
+from ..base import MujocoXML
+from ...utils.mjcf_utils import array_to_string, string_to_array
+from ...utils.mjcf_utils import new_geom, new_body, new_joint
 
 
 class Arena(MujocoXML):

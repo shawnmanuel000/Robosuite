@@ -1,14 +1,14 @@
 from collections import OrderedDict
 import numpy as np
 
-from robosuite.environments.robot_env import RobotEnv
+from .robot_env import RobotEnv
 
-from robosuite.models.arenas import TableArena
-from robosuite.models.objects import PotWithHandlesObject
-from robosuite.models.tasks import TableTopTask, UniformRandomSampler
-from robosuite.models.robots import check_bimanual
+from ..models.arenas import TableArena
+from ..models.objects import PotWithHandlesObject
+from ..models.tasks import TableTopTask, UniformRandomSampler
+from ..models.robots import check_bimanual
 
-import robosuite.utils.transform_utils as T
+from ..utils import transform_utils as T
 
 
 class TwoArmLift(RobotEnv):

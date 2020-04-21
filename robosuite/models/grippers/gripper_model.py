@@ -1,7 +1,7 @@
 """
 Defines the base class of all grippers
 """
-from robosuite.models.base import MujocoXML
+from ..base import MujocoXML
 
 
 class GripperModel(MujocoXML):

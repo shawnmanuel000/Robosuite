@@ -4,8 +4,8 @@ Driver class for Keyboard controller.
 
 import glfw
 import numpy as np
-from robosuite.devices import Device
-from robosuite.utils.transform_utils import rotation_matrix
+from . import Device
+from ..utils.transform_utils import rotation_matrix
 
 
 class Keyboard(Device):

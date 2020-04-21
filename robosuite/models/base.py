@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 import io
 import numpy as np
 
-from robosuite.utils import XMLError
+from ..utils import XMLError
 
 
 class MujocoXML(object):

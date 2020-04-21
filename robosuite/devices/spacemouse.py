@@ -27,8 +27,8 @@ except ModuleNotFoundError as exc:
                       "Only Mac OS X is officially supported. Install the additional "
                       "requirements with `pip install -r requirements-ik.txt`") from exc
 
-from robosuite.utils.transform_utils import rotation_matrix
-from robosuite.devices import Device
+from ..utils.transform_utils import rotation_matrix
+from . import Device
 
 AxisSpec = namedtuple("AxisSpec", ["channel", "byte1", "byte2", "scale"])
 

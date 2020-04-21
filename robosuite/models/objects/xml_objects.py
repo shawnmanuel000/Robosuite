@@ -1,5 +1,5 @@
-from robosuite.models.objects import MujocoXMLObject
-from robosuite.utils.mjcf_utils import xml_path_completion
+from . import MujocoXMLObject
+from ...utils.mjcf_utils import xml_path_completion
 
 
 class BottleObject(MujocoXMLObject):

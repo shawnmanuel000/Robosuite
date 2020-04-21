@@ -2,11 +2,11 @@
 Utility functions for grabbing user inputs
 """
 
-import robosuite as suite
-from robosuite.models.robots import *
-from robosuite.controllers import *
-from robosuite.robots import *
-import robosuite.utils.transform_utils as T
+from ... import robosuite as suite
+from ..models.robots import *
+from ..controllers import *
+from ..robots import *
+from . import transform_utils as T
 
 import numpy as np
 

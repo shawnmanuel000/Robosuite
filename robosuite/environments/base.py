@@ -2,7 +2,7 @@ from collections import OrderedDict
 from mujoco_py import MjSim, MjRenderContextOffscreen
 from mujoco_py import load_model_from_xml
 
-from robosuite.utils import SimulationError, XMLError, MujocoPyRenderer
+from ..utils import SimulationError, XMLError, MujocoPyRenderer
 
 REGISTERED_ENVS = {}
 

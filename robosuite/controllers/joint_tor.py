@@ -1,4 +1,4 @@
-from robosuite.controllers.base_controller import Controller
+from .base_controller import Controller
 import numpy as np
 
 

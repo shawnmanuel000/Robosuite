@@ -2,8 +2,8 @@ import copy
 import xml.etree.ElementTree as ET
 import numpy as np
 
-from robosuite.models.base import MujocoXML
-from robosuite.utils.mjcf_utils import string_to_array, array_to_string
+from ..base import MujocoXML
+from ...utils.mjcf_utils import string_to_array, array_to_string
 
 
 class MujocoObject:

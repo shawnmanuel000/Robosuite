@@ -1,8 +1,8 @@
 import numpy as np
 
-from robosuite.models.objects import MujocoGeneratedObject
-from robosuite.utils.mjcf_utils import new_body, new_geom, new_site
-from robosuite.utils.mjcf_utils import RED, GREEN, BLUE
+from . import MujocoGeneratedObject
+from ...utils.mjcf_utils import new_body, new_geom, new_site
+from ...utils.mjcf_utils import RED, GREEN, BLUE
 
 
 class PotWithHandlesObject(MujocoGeneratedObject):

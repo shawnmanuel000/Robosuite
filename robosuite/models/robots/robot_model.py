@@ -1,9 +1,9 @@
 from collections import OrderedDict
 
-from robosuite.models.base import MujocoXML
-from robosuite.utils import XMLError
-from robosuite.utils.mjcf_utils import array_to_string
-from robosuite.utils.transform_utils import euler2mat, mat2quat
+from ..base import MujocoXML
+from ...utils import XMLError
+from ...utils.mjcf_utils import array_to_string
+from ...utils.transform_utils import euler2mat, mat2quat
 
 import numpy as np
 

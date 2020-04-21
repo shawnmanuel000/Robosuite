@@ -1,5 +1,5 @@
-from robosuite.utils.mjcf_utils import new_joint, array_to_string
-from robosuite.models.tasks import Task, UniformRandomPegsSampler
+from ...utils.mjcf_utils import new_joint, array_to_string
+from . import Task, UniformRandomPegsSampler
 
 
 class NutAssemblyTask(Task):

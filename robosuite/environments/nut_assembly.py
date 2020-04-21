@@ -2,14 +2,14 @@ from collections import OrderedDict
 import random
 import numpy as np
 
-import robosuite.utils.transform_utils as T
-from robosuite.utils.mjcf_utils import string_to_array
-from robosuite.environments.robot_env import RobotEnv
-from robosuite.robots import SingleArm
+from ..utils import transform_utils as T
+from ..utils.mjcf_utils import string_to_array
+from .robot_env import RobotEnv
+from ..robots import SingleArm
 
-from robosuite.models.arenas import PegsArena
-from robosuite.models.objects import SquareNutObject, RoundNutObject
-from robosuite.models.tasks import NutAssemblyTask, UniformRandomPegsSampler
+from ..models.arenas import PegsArena
+from ..models.objects import SquareNutObject, RoundNutObject
+from ..models.tasks import NutAssemblyTask, UniformRandomPegsSampler
 
 
 class NutAssembly(RobotEnv):

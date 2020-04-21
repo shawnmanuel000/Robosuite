@@ -1,5 +1,5 @@
-from robosuite.models.base import MujocoXML
-from robosuite.utils.mjcf_utils import xml_path_completion
+from .base import MujocoXML
+from ..utils.mjcf_utils import xml_path_completion
 
 
 class MujocoWorldBase(MujocoXML):

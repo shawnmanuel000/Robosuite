@@ -1,14 +1,14 @@
 from collections import OrderedDict
 import numpy as np
 
-from robosuite.utils.transform_utils import convert_quat
+from ..utils.transform_utils import convert_quat
 
-from robosuite.environments.robot_env import RobotEnv
-from robosuite.robots import SingleArm
+from .robot_env import RobotEnv
+from ..robots import SingleArm
 
-from robosuite.models.arenas import TableArena
-from robosuite.models.objects import BoxObject
-from robosuite.models.tasks import TableTopTask, UniformRandomSampler
+from ..models.arenas import TableArena
+from ..models.objects import BoxObject
+from ..models.tasks import TableTopTask, UniformRandomSampler
 
 
 class Stack(RobotEnv):

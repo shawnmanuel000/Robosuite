@@ -1,9 +1,9 @@
 from collections import OrderedDict
 import numpy as np
 
-from robosuite.models.tasks import Task
-from robosuite.utils import RandomizationError
-from robosuite.utils.mjcf_utils import new_joint, array_to_string, string_to_array
+from . import Task
+from ...utils import RandomizationError
+from ...utils.mjcf_utils import new_joint, array_to_string, string_to_array
 
 
 class PickPlaceTask(Task):

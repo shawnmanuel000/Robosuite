@@ -1,5 +1,5 @@
-from robosuite.models.tasks import Task, UniformRandomSampler
-from robosuite.utils.mjcf_utils import new_joint, array_to_string
+from . import Task, UniformRandomSampler
+from ...utils.mjcf_utils import new_joint, array_to_string
 
 
 class TableTopTask(Task):

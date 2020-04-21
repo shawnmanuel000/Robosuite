@@ -1,11 +1,11 @@
 from collections import OrderedDict
 import numpy as np
 
-import robosuite.utils.transform_utils as T
+from ..utils import transform_utils as T
 
 from mujoco_py import MjSim
 
-from robosuite.models.robots import create_robot
+from ..models.robots import create_robot
 
 
 class Robot(object):

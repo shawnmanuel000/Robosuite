@@ -6,17 +6,14 @@ Run `pip install pybullet==2.6.9`.
 try:
     import pybullet as p
 except ImportError:
-    raise Exception(
-        "Please make sure pybullet is installed. Run `pip install pybullet==2.6.9`"
-    )
+    raise Exception("Please make sure pybullet is installed. Run `pip install pybullet==2.6.9`")
 import os
-from os.path import join as pjoin
-import robosuite
-
-from robosuite.controllers.joint_vel import JointVelocityController
-from robosuite.utils.control_utils import *
-import robosuite.utils.transform_utils as T
 import numpy as np
+from os.path import join as pjoin
+from ... import robosuite
+from ..utils.control_utils import *
+from ..utils import transform_utils as T
+from .joint_vel import JointVelocityController
 
 
 class PybulletServer(object):

@@ -1,5 +1,5 @@
-from robosuite.controllers.base_controller import Controller
-from robosuite.utils.control_utils import *
+from .base_controller import Controller
+from ..utils.control_utils import *
 import numpy as np
 
 

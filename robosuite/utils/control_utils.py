@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import linalg
-import robosuite.utils.transform_utils as trans
+from . import transform_utils as trans
 
 
 def nullspace_torques(mass_matrix, nullspace_matrix, initial_joint, joint_pos, joint_vel, joint_kp=10):

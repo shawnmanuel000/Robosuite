@@ -1,12 +1,12 @@
 import numpy as np
 
-from robosuite.environments.base import MujocoEnv
+from .base import MujocoEnv
 
-from robosuite.robots.single_arm import SingleArm
-from robosuite.robots.bimanual import Bimanual
-from robosuite.models.robots import check_bimanual
+from ..robots.single_arm import SingleArm
+from ..robots.bimanual import Bimanual
+from ..models.robots import check_bimanual
 
-from robosuite.controllers import reset_controllers
+from ..controllers import reset_controllers
 
 
 class RobotEnv(MujocoEnv):

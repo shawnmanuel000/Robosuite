@@ -5,13 +5,10 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from mujoco_py import MjSim, MjViewer
 
-from robosuite.models.world import MujocoWorldBase
-from robosuite.models.arenas.table_arena import TableArena
-from robosuite.utils.mjcf_utils import (
-    new_actuator,
-    new_joint,
-    array_to_string)
-from robosuite.models.objects.generated_objects import BoxObject
+from ..world import MujocoWorldBase
+from ..arenas.table_arena import TableArena
+from ..objects.generated_objects import BoxObject
+from ...utils.mjcf_utils import (new_actuator,new_joint,array_to_string)
 
 
 class GripperTester:

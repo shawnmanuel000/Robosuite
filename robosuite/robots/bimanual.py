@@ -1,16 +1,10 @@
-import numpy as np
-
-from collections import OrderedDict
-
-import robosuite.utils.transform_utils as T
-
-from robosuite.models.grippers import gripper_factory
-from robosuite.controllers import controller_factory, load_controller_config
-
-from robosuite.robots.robot import Robot
-
 import os
-
+import numpy as np
+from collections import OrderedDict
+from ..utils import transform_utils as T
+from ..models.grippers import gripper_factory
+from ..controllers import controller_factory, load_controller_config
+from .robot import Robot
 
 class Bimanual(Robot):
     """Initializes a bimanual robot, as defined by a single corresponding XML"""
