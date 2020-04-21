@@ -97,9 +97,7 @@ class MujocoEnv(metaclass=EnvMeta):
             raise XMLError("xml model defined non-positive time step")
         self.control_freq = control_freq
         if control_freq <= 0:
-            raise SimulationError(
-                "control frequency {} is invalid".format(control_freq)
-            )
+            raise SimulationError("control frequency {} is invalid".format(control_freq))
         self.control_timestep = 1. / control_freq
 
     def _load_model(self):
