@@ -13,7 +13,6 @@ class MujocoXML(object):
     Wraps around ElementTree and provides additional functionality for merging different models.
     Specially, we keep track of <worldbody/>, <actuator/> and <asset/>
     """
-
     def __init__(self, fname):
         """
         Loads a mujoco xml from file.
@@ -38,7 +37,6 @@ class MujocoXML(object):
         """
         Converts every file dependency into absolute path so when we merge we don't break things.
         """
-
         for node in self.asset.findall("./*[@file]"):
             file = node.get("file")
             abs_path = os.path.abspath(self.folder)
@@ -49,7 +47,6 @@ class MujocoXML(object):
         """
         Creates a <@name/> tag under root if there is none.
         """
-
         found = self.root.find(name)
         if found is not None:
             return found
@@ -96,14 +93,9 @@ class MujocoXML(object):
             string.write(ET.tostring(self.root, encoding="unicode"))
             if mode == "mujoco_py":
                 from mujoco_py import load_model_from_xml
-
                 model = load_model_from_xml(string.getvalue())
                 return model
-            raise ValueError(
-                "Unkown model mode: {}. Available options are: {}".format(
-                    mode, ",".join(available_modes)
-                )
-            )
+            raise ValueError("Unkown model mode: {}. Available options are: {}".format(mode, ",".join(available_modes)))
 
     def get_xml(self):
         """

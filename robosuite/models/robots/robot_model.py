@@ -9,22 +9,15 @@ import numpy as np
 
 # List of bimanaul robots -- must be maintained manually
 BIMANUAL_ROBOTS = {"Baxter"}
-
 REGISTERED_ROBOTS = {}
-
 
 def register_robot(target_class):
     REGISTERED_ROBOTS[target_class.__name__] = target_class
 
-
 def create_robot(robot_name, *args, **kwargs):
     """Try to get the equivalent functionality of gym.make in a sloppy way."""
     if robot_name not in REGISTERED_ROBOTS:
-        raise Exception(
-            "Robot {} not found. Make sure it is a registered robot among: {}".format(
-                robot_name, ", ".join(REGISTERED_ROBOTS)
-            )
-        )
+        raise Exception("Robot {} not found. Make sure it is a registered robot among: {}".format(robot_name, ", ".join(REGISTERED_ROBOTS)))
     return REGISTERED_ROBOTS[robot_name](*args, **kwargs)
 
 
@@ -32,47 +25,35 @@ def check_bimanual(robot_name):
     """Utility function that returns whether the inputted robot_name is a bimanual robot or not"""
     return robot_name in BIMANUAL_ROBOTS
 
-
 class RobotModelMeta(type):
     """Metaclass for registering robot arms"""
 
     def __new__(meta, name, bases, class_dict):
         cls = super().__new__(meta, name, bases, class_dict)
-
         # List all environments that should not be registered here.
         _unregistered_envs = ["Robot"]
-
         if cls.__name__ not in _unregistered_envs:
             register_robot(cls)
         return cls
 
-
 class RobotModel(MujocoXML, metaclass=RobotModelMeta):
     """Base class for all robot models."""
-
     def __init__(self, fname, idn=0, bottom_offset=(0, 0, 0)):
         """
         Initializes robot xml from file @fname.
 
         Args:
-            fname (str): Path to relevant xml file to create this robot instance
-            idn (int or str): Number or some other unique identification string for this robot instance
-            bottom_offset (3-list/tuple): x,y,z offset desired from initial coordinates
+            fname (str): Path to relevant xml file to create this robot instance idn (int or str): Number or some other unique identification string for this robot instance bottom_offset (3-list/tuple): x,y,z offset desired from initial coordinates
         """
         super().__init__(fname)
-
         # Set id and add prefixes to all body names to prevent naming clashes
         self.idn = idn
-
         # Set offset
         self.bottom_offset = np.array(bottom_offset)
-
         # Update all xml element prefixes
         self.add_prefix(self.naming_prefix)
-
         # key: gripper name and value: gripper model
         self.grippers = OrderedDict()
-
         # Get camera names for this robot
         self.cameras = self.get_element_names(self.worldbody, "camera")
 
@@ -90,27 +71,16 @@ class RobotModel(MujocoXML, metaclass=RobotModelMeta):
             arm_name = self.eef_name
         if arm_name in self.grippers:
             raise ValueError("Attempts to add multiple grippers to one body")
-
         arm_subtree = self.worldbody.find(".//body[@name='{}']".format(arm_name))
-
         for actuator in gripper.actuator:
-
             if actuator.get("name") is None:
                 raise XMLError("Actuator has no name")
-
             if not actuator.get("name").startswith("gripper"):
-                raise XMLError(
-                    "Actuator name {} does not have prefix 'gripper'".format(
-                        actuator.get("name")
-                    )
-                )
-
+                raise XMLError("Actuator name {} does not have prefix 'gripper'".format(actuator.get("name")))
         for body in gripper.worldbody:
             arm_subtree.append(body)
-
         self.merge(gripper, merge_body=False)
         self.grippers[arm_name] = gripper
-
         # Update cameras in this model
         self.cameras = self.get_element_names(self.worldbody, "camera")
 
@@ -134,8 +104,7 @@ class RobotModel(MujocoXML, metaclass=RobotModelMeta):
             attrib (str): Attribute to set for all joints
             values (ndarray): Values to set for each joint
         """
-        assert values.size == self.dof, "Error setting joint attributes: " + \
-            "Values must be same size as joint dimension. Got {}, expected {}!".format(values.size, self.dof)
+        assert values.size == self.dof, "Error setting joint attributes: " + "Values must be same size as joint dimension. Got {}, expected {}!".format(values.size, self.dof)
         body = self._root_body_
         for i in range(len(self._links_)):
             body = body.find("./body[@name='{}']".format(self._links_[i]))

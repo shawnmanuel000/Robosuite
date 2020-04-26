@@ -17,11 +17,7 @@ def xml_path_completion(xml_path):
         if @xml_path is absolute, do nothing
         if @xml_path is not absolute, load xml that is shipped by the package
     """
-    if xml_path.startswith("/"):
-        full_path = xml_path
-    else:
-        full_path = os.path.join(robosuite.models.assets_root, xml_path)
-    return full_path
+    return xml_path if xml_path.startswith("/") else os.path.join(robosuite.models.assets_root, xml_path)
 
 
 def array_to_string(array):

@@ -1,13 +1,9 @@
 import numpy as np
-
 from .base import MujocoEnv
-
 from ..robots.single_arm import SingleArm
 from ..robots.bimanual import Bimanual
 from ..models.robots import check_bimanual
-
 from ..controllers import reset_controllers
-
 
 class RobotEnv(MujocoEnv):
     """
@@ -38,70 +34,27 @@ class RobotEnv(MujocoEnv):
     ):
         """
         Args:
-            robots (str or list of str): Specification for specific robot arm(s) to be instantiated within this env
-                (e.g: "Sawyer" would generate one arm; ["Panda", "Panda", "Sawyer"] would generate three robot arms)
-
-            controller_configs (str or list of dict): If set, contains relevant controller parameters for creating a
-                custom controller. Else, uses the default controller for this specific task. Should either be single
-                dict if same controller is to be used for all robots or else it should be a list of the same length as
-                "robots" param
-
-            gripper_types (str or list of str): type of gripper, used to instantiate
-                gripper models from gripper factory. Default is "default", which is the default grippers(s) associated
-                with the robot(s) the 'robots' specification. None removes the gripper, and any other (valid) model
-                overrides the default gripper. Should either be single str if same gripper type is to be used for all
-                robots or else it should be a list of the same length as "robots" param
-
-            gripper_visualizations (bool or list of bool): True if using gripper visualization.
-                Useful for teleoperation. Should either be single bool if gripper visualization is to be used for all
-                robots or else it should be a list of the same length as "robots" param
-
-            initialization_noise (float or list of floats): The scale factor of uni-variate Gaussian random noise
-                applied to each of a robot's given initial joint positions. Setting this value to "None" or 0.0 results
-                in no noise being applied. Should either be single float if same noise value is to be used for all
-                robots or else it should be a list of the same length as "robots" param
-
+            robots (str or list of str): Specification for specific robot arm(s) to be instantiated within this env (e.g: "Sawyer" would generate one arm; ["Panda", "Panda", "Sawyer"] would generate three robot arms)
+            controller_configs (str or list of dict): If set, contains relevant controller parameters for creating a custom controller. Else, uses the default controller for this specific task. Should either be single dict if same controller is to be used for all robots or else it should be a list of the same length as "robots" param
+            gripper_types (str or list of str): type of gripper, used to instantiate gripper models from gripper factory. Default is "default", which is the default grippers(s) associated with the robot(s) the 'robots' specification. None removes the gripper, and any other (valid) model overrides the default gripper. Should either be single str if same gripper type is to be used for all robots or else it should be a list of the same length as "robots" param
+            gripper_visualizations (bool or list of bool): True if using gripper visualization. Useful for teleoperation. Should either be single bool if gripper visualization is to be used for all robots or else it should be a list of the same length as "robots" param
+            initialization_noise (float or list of floats): The scale factor of uni-variate Gaussian random noise applied to each of a robot's given initial joint positions. Setting this value to "None" or 0.0 results in no noise being applied. Should either be single float if same noise value is to be used for all robots or else it should be a list of the same length as "robots" param
             use_camera_obs (bool): if True, every observation includes rendered image(s)
-
-            use_indicator_object (bool): if True, sets up an indicator object that
-                is useful for debugging.
-
-            has_renderer (bool): If true, render the simulation state in
-                a viewer instead of headless mode.
-
+            use_indicator_object (bool): if True, sets up an indicator object that is useful for debugging.
+            has_renderer (bool): If true, render the simulation state in a viewer instead of headless mode.
             has_offscreen_renderer (bool): True if using off-screen rendering
-
             render_camera (str): Name of camera to render if `has_renderer` is True.
-
             render_collision_mesh (bool): True if rendering collision meshes in camera. False otherwise.
-
             render_visual_mesh (bool): True if rendering visual meshes in camera. False otherwise.
-
-            control_freq (float): how many control signals to receive in every second. This sets the amount of
-                simulation time that passes between every action input.
-
+            control_freq (float): how many control signals to receive in every second. This sets the amount of simulation time that passes between every action input.
             horizon (int): Every episode lasts for exactly @horizon timesteps.
-
             ignore_done (bool): True if never terminating the environment (ignore @horizon).
-
-            camera_names (str or list of str): name of camera to be rendered. Should either be single str if
-                same name is to be used for all cameras' rendering or else it should be a list of cameras to render.
+            camera_names (str or list of str): name of camera to be rendered. Should either be single str if same name is to be used for all cameras' rendering or else it should be a list of cameras to render.
                 Note: At least one camera must be specified if @use_camera_obs is True.
-                Note: To render all robots' cameras of a certain type (e.g.: "robotview" or "eye_in_hand"), use the
-                    convention "all-{name}" (e.g.: "all-robotview") to automatically render all camera images from each
-                    robot's camera list).
-
-            camera_heights (int or list of int): height of camera frame. Should either be single int if
-                same height is to be used for all cameras' frames or else it should be a list of the same length as
-                "camera names" param.
-
-            camera_widths (int or list of int): width of camera frame. Should either be single int if
-                same width is to be used for all cameras' frames or else it should be a list of the same length as
-                "camera names" param.
-
-            camera_depths (bool or list of bool): True if rendering RGB-D, and RGB otherwise. Should either be single
-                bool if same depth setting is to be used for all cameras or else it should be a list of the same length as
-                "camera names" param.
+                Note: To render all robots' cameras of a certain type (e.g.: "robotview" or "eye_in_hand"), use the convention "all-{name}" (e.g.: "all-robotview") to automatically render all camera images from each robot's camera list).
+            camera_heights (int or list of int): height of camera frame. Should either be single int if same height is to be used for all cameras' frames or else it should be a list of the same length as "camera names" param.
+            camera_widths (int or list of int): width of camera frame. Should either be single int if nsame width is to be used for all cameras' frames or else it should be a list of the same length as "camera names" param.
+            camera_depths (bool or list of bool): True if rendering RGB-D, and RGB otherwise. Should either be single nbool if same depth setting is to be used for all cameras or else it should be a list of the same length as "camera names" param.
 
         """
         # Robot
@@ -126,10 +79,8 @@ class RobotEnv(MujocoEnv):
 
         # Camera / Rendering Settings
         self.has_offscreen_renderer = has_offscreen_renderer
-        self.camera_names = list(camera_names) if type(camera_names) is list or \
-            type(camera_names) is tuple else [camera_names]
+        self.camera_names = list(camera_names) if type(camera_names) is list or type(camera_names) is tuple else [camera_names]
         self.num_cameras = len(self.camera_names)
-
         self.camera_heights = self._input2list(camera_heights, self.num_cameras)
         self.camera_widths = self._input2list(camera_widths, self.num_cameras)
         self.camera_depths = self._input2list(camera_depths, self.num_cameras)
@@ -141,31 +92,13 @@ class RobotEnv(MujocoEnv):
             raise ValueError("Must specify at least one camera name when using camera obs")
 
         # Robot configurations
-        self.robot_configs = [
-            {
-                "controller_config": controller_configs[idx],
-                "initialization_noise": initialization_noise[idx],
-                "gripper_type": gripper_types[idx],
-                "gripper_visualization": gripper_visualizations[idx],
-                "control_freq": control_freq
-            }
-            for idx in range(self.num_robots)
-        ]
+        self.robot_configs = [{"controller_config": controller_configs[idx], "initialization_noise": initialization_noise[idx], "gripper_type": gripper_types[idx], "gripper_visualization": gripper_visualizations[idx], "control_freq": control_freq} for idx in range(self.num_robots)]
 
         # whether to use indicator object or not
         self.use_indicator_object = use_indicator_object
 
         # Run superclass init
-        super().__init__(
-            has_renderer=has_renderer,
-            has_offscreen_renderer=self.has_offscreen_renderer,
-            render_camera=render_camera,
-            render_collision_mesh=render_collision_mesh,
-            render_visual_mesh=render_visual_mesh,
-            control_freq=control_freq,
-            horizon=horizon,
-            ignore_done=ignore_done,
-        )
+        super().__init__(has_renderer=has_renderer, has_offscreen_renderer=self.has_offscreen_renderer, render_camera=render_camera, render_collision_mesh=render_collision_mesh, render_visual_mesh=render_visual_mesh, control_freq=control_freq, horizon=horizon, ignore_done=ignore_done,)
 
     @property
     def action_spec(self):
@@ -208,7 +141,6 @@ class RobotEnv(MujocoEnv):
         Loads an xml model, puts it in self.model
         """
         super()._load_model()
-
         # Load robots
         self._load_robots()
 
@@ -229,10 +161,8 @@ class RobotEnv(MujocoEnv):
         if self.use_indicator_object:
             ind_qpos = self.sim.model.get_joint_qpos_addr("pos_indicator")
             self._ref_indicator_pos_low, self._ref_indicator_pos_high = ind_qpos
-
             ind_qvel = self.sim.model.get_joint_qvel_addr("pos_indicator")
             self._ref_indicator_vel_low, self._ref_indicator_vel_high = ind_qvel
-
             self.indicator_id = self.sim.model.body_name2id("pos_indicator")
 
     def _reset_internal(self):
@@ -270,15 +200,9 @@ class RobotEnv(MujocoEnv):
                                 temp_names.append(robot_cam_name)
                     # We also need to broadcast the corresponding values from each camera dimensions as well
                     end_idx = len(temp_names) - 1
-                    self.camera_widths = self.camera_widths[:start_idx] + \
-                        [self.camera_widths[start_idx]] * (end_idx - start_idx) + \
-                        self.camera_widths[(start_idx + 1):]
-                    self.camera_heights = self.camera_heights[:start_idx] + \
-                        [self.camera_heights[start_idx]] * (end_idx - start_idx) + \
-                        self.camera_heights[(start_idx + 1):]
-                    self.camera_depths = self.camera_depths[:start_idx] + \
-                        [self.camera_depths[start_idx]] * (end_idx - start_idx) + \
-                        self.camera_depths[(start_idx + 1):]
+                    self.camera_widths = self.camera_widths[:start_idx] + [self.camera_widths[start_idx]] * (end_idx - start_idx) + self.camera_widths[(start_idx + 1):]
+                    self.camera_heights = self.camera_heights[:start_idx] + [self.camera_heights[start_idx]] * (end_idx - start_idx) + self.camera_heights[(start_idx + 1):]
+                    self.camera_depths = self.camera_depths[:start_idx] + [self.camera_depths[start_idx]] * (end_idx - start_idx) + self.camera_depths[(start_idx + 1):]
                 else:
                     # We simply add this camera to the temp_names
                     temp_names.append(cam_name)
@@ -299,9 +223,7 @@ class RobotEnv(MujocoEnv):
             policy_step (bool): Whether a new policy step (action) is being taken
         """
         # Verify that the action is the correct dimension
-        assert len(action) == self.action_dim, \
-            "environment got invalid action dimension -- expected {}, got {}".format(
-                self.action_dim, len(action))
+        assert len(action) == self.action_dim, "environment got invalid action dimension -- expected {}, got {}".format(self.action_dim, len(action))
 
         # Update robot joints based on controller actions
         cutoff = 0
@@ -312,10 +234,7 @@ class RobotEnv(MujocoEnv):
         # Also update indicator object if necessary
         if self.use_indicator_object:
             # Apply gravity compensation to indicator object too
-            self.sim.data.qfrc_applied[
-                self._ref_indicator_vel_low: self._ref_indicator_vel_high
-                ] = self.sim.data.qfrc_bias[
-                    self._ref_indicator_vel_low: self._ref_indicator_vel_high]
+            self.sim.data.qfrc_applied[self._ref_indicator_vel_low: self._ref_indicator_vel_high] = self.sim.data.qfrc_bias[self._ref_indicator_vel_low: self._ref_indicator_vel_high]
 
     def _post_action(self, action):
         """
@@ -344,21 +263,13 @@ class RobotEnv(MujocoEnv):
 
         # Loop through cameras and update the observations
         if self.use_camera_obs:
-            for (cam_name, cam_w, cam_h, cam_d) in \
-                    zip(self.camera_names, self.camera_widths, self.camera_heights, self.camera_depths):
-
+            for (cam_name, cam_w, cam_h, cam_d) in zip(self.camera_names, self.camera_widths, self.camera_heights, self.camera_depths):
                 # Add camera observations to the dict
-                camera_obs = self.sim.render(
-                    camera_name=cam_name,
-                    width=cam_w,
-                    height=cam_h,
-                    depth=cam_d,
-                )
+                camera_obs = self.sim.render(camera_name=cam_name, width=cam_w, height=cam_h, depth=cam_d)
                 if cam_d:
                     di[cam_name + "_image"], di[cam_name + "_depth"] = camera_obs
                 else:
                     di[cam_name + "_image"] = camera_obs
-
         return di
 
     def _check_contact(self):
@@ -370,23 +281,13 @@ class RobotEnv(MujocoEnv):
             for contact in self.sim.data.contact[: self.sim.data.ncon]:
                 # Single arm case
                 if robot.arm_type == "single":
-                    if (
-                        self.sim.model.geom_id2name(contact.geom1)
-                        in robot.gripper.contact_geoms()
-                        or self.sim.model.geom_id2name(contact.geom2)
-                        in robot.gripper.contact_geoms()
-                    ):
+                    if (self.sim.model.geom_id2name(contact.geom1) in robot.gripper.contact_geoms() or self.sim.model.geom_id2name(contact.geom2) in robot.gripper.contact_geoms()):
                         collisions[idx] = True
                         break
                 # Bimanual case
                 else:
                     for arm in robot.arms:
-                        if (
-                                self.sim.model.geom_id2name(contact.geom1)
-                                in robot.gripper[arm].contact_geoms()
-                                or self.sim.model.geom_id2name(contact.geom2)
-                                in robot.gripper[arm].contact_geoms()
-                        ):
+                        if (self.sim.model.geom_id2name(contact.geom1) in robot.gripper[arm].contact_geoms() or self.sim.model.geom_id2name(contact.geom2) in robot.gripper[arm].contact_geoms()):
                             collisions[idx] = True
                             break
         return collisions
@@ -406,19 +307,7 @@ class RobotEnv(MujocoEnv):
         # Loop through robots and instantiate Robot object for each
         for idx, (name, config) in enumerate(zip(self.robot_names, self.robot_configs)):
             # Create the robot instance
-            if not check_bimanual(name):
-                self.robots[idx] = SingleArm(
-                    robot_type=name,
-                    idn=idx,
-                    **config
-                )
-            else:
-                self.robots[idx] = Bimanual(
-                    robot_type=name,
-                    idn=idx,
-                    **config
-                )
-
+            self.robots[idx] = SingleArm(robot_type=name, idn=idx, **config) if not check_bimanual(name) else Bimanual(robot_type=name, idn=idx, **config)
             # Now, load the robot models
             self.robots[idx].load_model()
 
