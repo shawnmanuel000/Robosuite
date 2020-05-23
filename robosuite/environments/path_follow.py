@@ -82,11 +82,7 @@ class PathFollow(RobotEnv):
         self.reward_shaping = reward_shaping
         # whether to use ground-truth object states
         self.use_object_obs = use_object_obs
-        # object placement initializer
-        # if placement_initializer:
-        #     self.placement_initializer = placement_initializer
-        # else:
-        #     self.placement_initializer = UniformRandomSampler( x_range=[-0.03, 0.03], y_range=[-0.03, 0.03], ensure_object_boundary_in_range=False, z_rotation=None)
+        # self.placement_initializer = UniformRandomSampler( x_range=[-0.03, 0.03], y_range=[-0.03, 0.03], ensure_object_boundary_in_range=False, z_rotation=None)
         super().__init__(robots=robots, controller_configs=controller_configs, gripper_types=gripper_types, gripper_visualizations=gripper_visualizations, initialization_noise=initialization_noise, use_camera_obs=use_camera_obs, use_indicator_object=use_indicator_object, has_renderer=has_renderer, has_offscreen_renderer=has_offscreen_renderer, render_camera=render_camera, render_collision_mesh=render_collision_mesh, render_visual_mesh=render_visual_mesh, control_freq=control_freq, horizon=horizon, ignore_done=ignore_done, camera_names=camera_names, camera_heights=camera_heights, camera_widths=camera_widths, camera_depths=camera_depths)
 
     def reward(self, action=None):
@@ -110,34 +106,6 @@ class PathFollow(RobotEnv):
         Returns:
             reward (float): the reward
         """
-        # reward = 0.0
-        # # sparse completion reward
-        # if self._check_success():
-        #     reward = 1.0
-        # # use a shaping reward
-        # if self.reward_shaping:
-        #     # reaching reward
-        #     cube_pos = self.sim.data.body_xpos[self.cube_body_id]
-        #     gripper_site_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
-        #     dist = np.linalg.norm(gripper_site_pos - cube_pos)
-        #     reaching_reward = 1 - np.tanh(10.0 * dist)
-        #     reward += reaching_reward
-        #     # grasping reward
-        #     touch_left_finger = False
-        #     touch_right_finger = False
-        #     for i in range(self.sim.data.ncon):
-        #         c = self.sim.data.contact[i]
-        #         if c.geom1 in self.l_finger_geom_ids and c.geom2 == self.cube_geom_id:
-        #             touch_left_finger = True
-        #         if c.geom1 == self.cube_geom_id and c.geom2 in self.l_finger_geom_ids:
-        #             touch_left_finger = True
-        #         if c.geom1 in self.r_finger_geom_ids and c.geom2 == self.cube_geom_id:
-        #             touch_right_finger = True
-        #         if c.geom1 == self.cube_geom_id and c.geom2 in self.r_finger_geom_ids:
-        #             touch_right_finger = True
-        #     if touch_left_finger and touch_right_finger:
-        #         reward += 0.25
-
         ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
         target_pos = self.get_body_pos("target")
         path = [self.get_body_pos(name) for name in self.path_names]
@@ -146,8 +114,13 @@ class PathFollow(RobotEnv):
         reward_goal = -np.linalg.norm(target_dist)*2
         reward_path = -np.min(np.linalg.norm(path_dists, axis=-1))
         reward = reward_goal + reward_path
-
         return reward * self.reward_scale / 2.25
+
+    def done(self):
+        state = self._get_observation()
+        ef_pos = state["robot0_eef_pos"]
+        target_pos = state["target_pos"]
+        return np.linalg.norm(ef_pos-target_pos)<0.01
 
     def _load_model(self):
         """
@@ -179,73 +152,50 @@ class PathFollow(RobotEnv):
             point = ET.Element("body")
             point.set("name", name)
             point.set("pos", "0 0 0")
-            point.append(ET.fromstring("<geom conaffinity='0' contype='0' pos='0 0 0' rgba='0.8 0.2 0.4 0.8' size='.002' type='sphere'/>"))
+            point.append(ET.fromstring("<geom conaffinity='0' group='1' contype='0' pos='0 0 0' rgba='0.8 0.2 0.4 0.8' size='.01' type='sphere'/>"))
             path.append(point)
             self.path_names.append(name)
         worldbody.append(path)
         self.range = 1.0
-        self.origin = np.array([0, 0, 0.3])
-        self.size = np.maximum([0.25, 0.25, 0], 0.001)
-        space = f"<geom conaffinity='0' contype='0' name='space' pos='{' '.join([f'{p}' for p in self.origin])}' rgba='0.2 0.2 0.2 0.1' size='{self.size[0]}' type='sphere'/>"
+        self.origin = np.array([-0.1, 0, 1])
+        self.size = np.maximum([0.25, 0.2, 0], 0.001)
+        self.space = "box"
+        size = self.size[0] if self.space == "sphere" else self.size
+        size_str = lambda x: ' '.join([f'{p}' for p in x])
+        space = f"<body name='space' pos='{size_str(self.origin)}'><geom conaffinity='0' group='1' contype='0' name='space' rgba='0.2 0.2 0.2 0.1' size='{size_str(size)}' type='{self.space}'/></body>"
         worldbody.append(ET.fromstring(space))
-        target = "<body name='target' pos='0 -0.20 .2'><geom conaffinity='0' contype='0' name='target' pos='0 0 0' rgba='0.4 0.8 0.2 1' size='.009' type='sphere'/></body>"
+        target = "<body name='target' pos='0 -0.20 .2'><geom conaffinity='0' group='1' contype='0' name='target' pos='0 0 0' rgba='0.4 0.8 0.2 1' size='.02' type='sphere'/></body>"
         worldbody.append(ET.fromstring(target))
 
-
-        # initialize objects of interest
-        # cube = BoxObject( size_min=[0.020, 0.020, 0.020], size_max=[0.022, 0.022, 0.022], rgba=[1, 0, 0, 1])
-        # self.mujoco_objects = OrderedDict([("cube", cube)])
-        # self.n_objects = len(self.mujoco_objects)
-        # task includes arena, robot, and objects of interest
         self.model = TableTopTask(self.mujoco_arena, [robot.robot_model for robot in self.robots])
         self.model.place_objects()
 
-    def _get_reference(self):
-        """
-        Sets up references to important components. A reference is typically an
-        index or a list of indices that point to the corresponding elements
-        in a flatten array, which is how MuJoCo stores physical simulation data.
-        """
-        super()._get_reference()
-        # Additional object references from this env
-        # self.cube_body_id = self.sim.model.body_name2id("cube")
-        self.l_finger_geom_ids = [self.sim.model.geom_name2id(x) for x in self.robots[0].gripper.left_finger_geoms]
-        self.r_finger_geom_ids = [self.sim.model.geom_name2id(x) for x in self.robots[0].gripper.right_finger_geoms]
-        # self.cube_geom_id = self.sim.model.geom_name2id("cube")
-
-    def _reset_internal(self):
+    def _reset_internal(self, xoffset=-1, **kwargs):
         """
         Resets simulation internal configurations.
         """
         super()._reset_internal()
-        
-        
-        rand = np.random.uniform(-1, 1, size=self.size.shape)
-        while np.linalg.norm(rand) > 1 or np.linalg.norm(rand) < 0.1 or rand[1]>0:
-            rand = np.random.uniform(-1, 1, size=self.size.shape)
-        target_pos = self.origin + self.range*self.size*rand
+        origin = self.origin + xoffset*np.array([0, 0.25, 0])
+        target_pos = origin + self.range*self.size*np.random.uniform(-1, 1, size=self.size.shape)
         self.sim.model.body_pos[self.sim.model.body_names.index("target")] = target_pos
-        qpos = 0.1*np.random.uniform(low=-1, high=1, size=self.sim.model.nq) + self.init_qpos
-        qpos[0] = 0.5*np.random.uniform(-3.14, 3.14)
-        qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.sim.model.nv)
-        self.set_state(qpos, qvel)
+        self.sim.model.body_pos[self.sim.model.body_names.index("space")] = origin
         ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
-        # ef_pos = self.get_body_pos("fingertip")
+        ef_to_pos = origin + self.range*self.size*np.random.uniform(-1, 1, size=self.size.shape)
+        num_steps = np.linalg.norm(ef_to_pos-ef_pos)/np.max(self.robots[0].controller.output_max)
+        for _ in range(10*int(num_steps)): 
+            ef_from_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
+            ef_pos_diff = (ef_to_pos - ef_from_pos)
+            self.step([*ef_pos_diff, 0])
         target_pos = self.get_body_pos("target")
+        ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
         points = np.linspace(ef_pos, target_pos, len(self.path_names))
         path_indices = [self.sim.model.body_names.index(name) for name in self.path_names]
         for i,point in zip(path_indices, points):
             self.sim.model.body_pos[i] = point
+        qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.sim.model.nv)
+        self.set_state(qvel=qvel)
+        super()._reset_internal()
         
-        
-        # Reset all object positions using initializer sampler if we're not directly loading from an xml
-        # if not self.deterministic_reset:
-        #     # Sample from the placement initializer for all objects
-        #     obj_pos, obj_quat = self.placement_initializer.sample()
-        #     # Loop through all objects and reset their positions
-        #     for i, (obj_name, _) in enumerate(self.mujoco_objects.items()):
-        #         self.sim.data.set_joint_qpos(obj_name, np.concatenate([np.array(obj_pos[i]), np.array(obj_quat[i])]))
-
     def _get_observation(self):
         """
         Returns an OrderedDict containing observations [(name_string, np.array), ...].
@@ -262,30 +212,10 @@ class PathFollow(RobotEnv):
         di = super()._get_observation()
         # low-level object information
         if self.use_object_obs:
-            # Get robot prefix
-            # pr = self.robots[0].robot_model.naming_prefix
-            # position and rotation of object
-            # cube_pos = np.array(self.sim.data.body_xpos[self.cube_body_id])
-            # cube_quat = convert_quat(np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw")
-            # di["cube_pos"] = cube_pos
-            # di["cube_quat"] = cube_quat
-            # gripper_site_pos = np.array(self.sim.data.site_xpos[self.robots[0].eef_site_id])
-            # di[pr + "gripper_to_cube"] = gripper_site_pos - cube_pos
-            # di["object-state"] = np.concatenate([cube_pos, cube_quat, di[pr + "gripper_to_cube"]])
-
             path = [self.get_body_pos(name) for name in self.path_names]
+            di["target_pos"] = path[-1]
             di["task_state"] = np.concatenate([*path])
-
         return di
-
-    # def _check_success(self):
-    #     """
-    #     Returns True if task has been completed.
-    #     """
-    #     cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
-    #     table_height = self.table_full_size[2]
-    #     # cube is higher than the table top above a margin
-    #     return cube_height > table_height + 0.04
 
     def _visualization(self):
         """
@@ -293,8 +223,6 @@ class PathFollow(RobotEnv):
         """
         # color the gripper site appropriately based on distance to cube
         if self.robots[0].gripper_visualization:
-            # get distance to cube
-            # cube_site_id = self.sim.model.site_name2id("cube")
             dist = np.sum(np.square(self.get_body_pos("target") - self.sim.data.get_site_xpos(self.robots[0].gripper.visualization_sites["grip_site"])))
             # set RGBA for the EEF site here
             max_dist = 0.1

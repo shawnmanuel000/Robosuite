@@ -44,7 +44,7 @@ class MujocoEnv(metaclass=EnvMeta):
     def __init__(
         self,
         has_renderer=False,
-        has_offscreen_renderer=True,
+        has_offscreen_renderer=False,
         render_camera="frontview",
         render_collision_mesh=False,
         render_visual_mesh=True,
@@ -134,10 +134,10 @@ class MujocoEnv(metaclass=EnvMeta):
         # Setup sim time based on control frequency
         self.initialize_time(self.control_freq)
 
-    def reset(self):
+    def reset(self, **kwargs):
         """Resets simulation."""
         # TODO(yukez): investigate black screen of death
-        self._reset_internal()
+        self._reset_internal(**kwargs)
         self.sim.forward()
         return self._get_observation()
 
@@ -172,7 +172,6 @@ class MujocoEnv(metaclass=EnvMeta):
         self._get_reference()
         self.cur_time = 0
         self.timestep = 0
-        self.done = False
 
     def _get_observation(self):
         """Returns an OrderedDict containing observations [(name_string, np.array), ...]."""
@@ -180,9 +179,6 @@ class MujocoEnv(metaclass=EnvMeta):
 
     def step(self, action):
         """Takes a step in simulation with control command @action."""
-        if self.done:
-            raise ValueError("executing action in terminated episode")
-
         self.timestep += 1
 
         # Since the env.step frequency is slower than the mjsim timestep frequency, the internal controller will output
@@ -200,9 +196,9 @@ class MujocoEnv(metaclass=EnvMeta):
 
         # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep
-
+        next_state = self._get_observation()
         reward, done, info = self._post_action(action)
-        return self._get_observation(), reward, done, info
+        return next_state, reward, done, info
 
     def _pre_action(self, action, policy_step=False):
         """Do any preprocessing before taking an action."""
@@ -211,20 +207,16 @@ class MujocoEnv(metaclass=EnvMeta):
     def _post_action(self, action):
         """Do any housekeeping after taking an action."""
         reward = self.reward(action)
-
-        # done if number of elapsed timesteps is greater than horizon
-        self.done = (self.timestep >= self.horizon) and not self.ignore_done
-        return reward, self.done, {}
+        done = self.done()
+        return reward, done, {}
 
     def reward(self, action):
         """Reward should be a function of state and action."""
         return 0
 
-    # def render(self):
-    #     """
-    #     Renders to an on-screen window.
-    #     """
-    #     self.viewer.render()
+    def done(self):
+        # done if number of elapsed timesteps is greater than horizon
+        return (self.timestep >= self.horizon) and not self.ignore_done
 
     def render(self, mode='human', width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name=None):
         if mode == 'rgb_array':
@@ -243,7 +235,13 @@ class MujocoEnv(metaclass=EnvMeta):
         self.viewer = self.viewers.get(mode)
         if self.viewer is None:
             self.viewer = mujoco_py.MjViewer(self.sim) if mode in ["human"] else mujoco_py.MjRenderContextOffscreen(self.sim, -1) if mode in ["rgb_array", "depth_array"] else None
+            self.viewer.vopt.geomgroup[0] = (1 if self.render_collision_mesh else 0)
+            self.viewer.vopt.geomgroup[1] = (1 if self.render_visual_mesh else 0)
+            self.viewer._hide_overlay = True
+            self.viewer._render_every_frame = True
             self.viewer.cam.trackbodyid = 0
+            self.viewer.cam.azimuth = 160
+            self.viewer.cam.elevation = -5
             self.viewers[mode] = self.viewer
         return self.viewer
 
@@ -333,9 +331,10 @@ class MujocoEnv(metaclass=EnvMeta):
         pos = self.sim.data.get_body_xpos(body_name)
         return pos
 
-    def set_state(self, qpos, qvel):
-        assert qpos.shape == (self.sim.model.nq,) and qvel.shape == (self.sim.model.nv,)
+    def set_state(self, qpos=None, qvel=None):
         old_state = self.sim.get_state()
+        qpos = old_state.qpos if qpos is None else qpos
+        qvel = old_state.qvel if qvel is None else qvel
         new_state = mujoco_py.MjSimState(old_state.time, qpos, qvel, old_state.act, old_state.udd_state)
         self.sim.set_state(new_state)
         self.sim.forward()
