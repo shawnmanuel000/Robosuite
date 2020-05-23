@@ -1,6 +1,10 @@
 import numpy as np
-from robosuite.controllers import load_controller_config
-from robosuite.utils.input_utils import *
+import sys
+import os
+sys.path.append(os.path.abspath("./"))
+from src.envs.Robosuite import robosuite
+# from robosuite.controllers import load_controller_config
+from src.envs.Robosuite.robosuite.utils.input_utils import *
 
 
 if __name__ == "__main__":
@@ -41,7 +45,7 @@ if __name__ == "__main__":
     controller_name = choose_controller()
 
     # Load the desired controller
-    options["controller_configs"] = load_controller_config(default_controller=controller_name)
+    options["controller_configs"] = robosuite.controllers.load_controller_config(default_controller=controller_name)
 
     # Help message to user
     print()

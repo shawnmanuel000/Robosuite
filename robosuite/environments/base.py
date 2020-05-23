@@ -1,3 +1,5 @@
+import mujoco_py
+import numpy as np
 from collections import OrderedDict
 from mujoco_py import MjSim, MjRenderContextOffscreen
 from mujoco_py import load_model_from_xml
@@ -5,6 +7,7 @@ from mujoco_py import load_model_from_xml
 from ..utils import SimulationError, XMLError, MujocoPyRenderer
 
 REGISTERED_ENVS = {}
+DEFAULT_SIZE = 500
 
 
 def register_env(target_class):
@@ -67,6 +70,7 @@ class MujocoEnv(metaclass=EnvMeta):
         self.render_collision_mesh = render_collision_mesh
         self.render_visual_mesh = render_visual_mesh
         self.viewer = None
+        self.viewers = {}
 
         # Simulation-specific attributes
         self.control_freq = control_freq
@@ -123,6 +127,9 @@ class MujocoEnv(metaclass=EnvMeta):
         # Create the simulation instance and run a single step to make sure changes have propagated through sim state
         self.sim = MjSim(self.mjpy_model)
         self.sim.step()
+
+        self.init_qpos = np.copy(self.sim.data.qpos)
+        self.init_qvel = np.copy(self.sim.data.qvel)
 
         # Setup sim time based on control frequency
         self.initialize_time(self.control_freq)
@@ -213,11 +220,32 @@ class MujocoEnv(metaclass=EnvMeta):
         """Reward should be a function of state and action."""
         return 0
 
-    def render(self):
-        """
-        Renders to an on-screen window.
-        """
-        self.viewer.render()
+    # def render(self):
+    #     """
+    #     Renders to an on-screen window.
+    #     """
+    #     self.viewer.render()
+
+    def render(self, mode='human', width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name=None):
+        if mode == 'rgb_array':
+            camera_id = self.model.camera_name2id(camera_name) if camera_name in self.model._camera_name2id else None
+            self.get_viewer(mode).render(width, height, camera_id=camera_id)
+            data = self.get_viewer(mode).read_pixels(width, height, depth=False)
+            return data[::-1, :, :]
+        elif mode == 'depth_array':
+            self.get_viewer(mode).render(width, height)
+            data = self.get_viewer(mode).read_pixels(width, height, depth=True)[1]
+            return data[::-1, :]
+        elif mode == 'human':
+            self.get_viewer(mode).render()
+
+    def get_viewer(self, mode):
+        self.viewer = self.viewers.get(mode)
+        if self.viewer is None:
+            self.viewer = mujoco_py.MjViewer(self.sim) if mode in ["human"] else mujoco_py.MjRenderContextOffscreen(self.sim, -1) if mode in ["rgb_array", "depth_array"] else None
+            self.viewer.cam.trackbodyid = 0
+            self.viewers[mode] = self.viewer
+        return self.viewer
 
     def observation_spec(self):
         """
@@ -300,6 +328,18 @@ class MujocoEnv(metaclass=EnvMeta):
         if self.viewer is not None:
             self.viewer.close()  # change this to viewer.finish()?
             self.viewer = None
+
+    def get_body_pos(self, body_name):
+        pos = self.sim.data.get_body_xpos(body_name)
+        return pos
+
+    def set_state(self, qpos, qvel):
+        assert qpos.shape == (self.sim.model.nq,) and qvel.shape == (self.sim.model.nv,)
+        old_state = self.sim.get_state()
+        new_state = mujoco_py.MjSimState(old_state.time, qpos, qvel, old_state.act, old_state.udd_state)
+        self.sim.set_state(new_state)
+        self.sim.forward()
+        self.sim.step()
 
     def close(self):
         """Do any cleanup necessary here."""
