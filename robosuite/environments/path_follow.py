@@ -152,7 +152,7 @@ class PathFollow(RobotEnv):
             point = ET.Element("body")
             point.set("name", name)
             point.set("pos", "0 0 0")
-            point.append(ET.fromstring("<geom conaffinity='0' group='1' contype='0' pos='0 0 0' rgba='0.8 0.2 0.4 0.8' size='.01' type='sphere'/>"))
+            point.append(ET.fromstring("<geom conaffinity='0' group='1' contype='0' pos='0 0 0' rgba='0.8 0.2 0.4 0.8' size='.005' type='sphere'/>"))
             path.append(point)
             self.path_names.append(name)
         worldbody.append(path)
@@ -162,9 +162,9 @@ class PathFollow(RobotEnv):
         self.space = "box"
         size = self.size[0] if self.space == "sphere" else self.size
         size_str = lambda x: ' '.join([f'{p}' for p in x])
-        space = f"<body name='space' pos='{size_str(self.origin)}'><geom conaffinity='0' group='1' contype='0' name='space' rgba='0.2 0.2 0.2 0.1' size='{size_str(size)}' type='{self.space}'/></body>"
+        space = f"<body name='space' pos='{size_str(self.origin)}'><geom conaffinity='0' group='1' contype='0' name='space' rgba='0.9 0.9 0.9 0.4' size='{size_str(size)}' type='{self.space}'/></body>"
         worldbody.append(ET.fromstring(space))
-        target = "<body name='target' pos='0 -0.20 .2'><geom conaffinity='0' group='1' contype='0' name='target' pos='0 0 0' rgba='0.4 0.8 0.2 1' size='.02' type='sphere'/></body>"
+        target = "<body name='target' pos='0 -0.20 .2'><geom conaffinity='0' group='1' contype='0' name='target' pos='0 0 0' rgba='0.4 0.8 0.2 1' size='.01' type='sphere'/></body>"
         worldbody.append(ET.fromstring(target))
 
         self.model = TableTopTask(self.mujoco_arena, [robot.robot_model for robot in self.robots])
@@ -182,10 +182,14 @@ class PathFollow(RobotEnv):
         ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
         ef_to_pos = origin + self.range*self.size*np.random.uniform(-1, 1, size=self.size.shape)
         num_steps = np.linalg.norm(ef_to_pos-ef_pos)/np.max(self.robots[0].controller.output_max)
-        for _ in range(10*int(num_steps)): 
+        for i in range(10*int(num_steps)): 
             ef_from_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
             ef_pos_diff = (ef_to_pos - ef_from_pos)
-            self.step([*ef_pos_diff, 0])
+            action = [*ef_pos_diff, 0]
+            for j in range(int(self.control_timestep / self.model_timestep)):
+                self._pre_action(action, policy_step=(j)==0)
+                self.sim.step()
+            print(i, ef_pos_diff)
         target_pos = self.get_body_pos("target")
         ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
         points = np.linspace(ef_pos, target_pos, len(self.path_names))
@@ -194,7 +198,7 @@ class PathFollow(RobotEnv):
             self.sim.model.body_pos[i] = point
         qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.sim.model.nv)
         self.set_state(qvel=qvel)
-        super()._reset_internal()
+        self.timestep = 0
         
     def _get_observation(self):
         """

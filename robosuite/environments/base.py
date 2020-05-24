@@ -240,8 +240,8 @@ class MujocoEnv(metaclass=EnvMeta):
             self.viewer._hide_overlay = True
             self.viewer._render_every_frame = True
             self.viewer.cam.trackbodyid = 0
-            self.viewer.cam.azimuth = 160
-            self.viewer.cam.elevation = -5
+            self.viewer.cam.azimuth = 180
+            self.viewer.cam.elevation = -15
             self.viewers[mode] = self.viewer
         return self.viewer
 
