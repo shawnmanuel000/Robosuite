@@ -189,7 +189,6 @@ class PathFollow(RobotEnv):
             for j in range(int(self.control_timestep / self.model_timestep)):
                 self._pre_action(action, policy_step=(j)==0)
                 self.sim.step()
-            print(i, ef_pos_diff)
         target_pos = self.get_body_pos("target")
         ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
         points = np.linspace(ef_pos, target_pos, len(self.path_names))
