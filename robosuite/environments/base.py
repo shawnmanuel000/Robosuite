@@ -220,8 +220,7 @@ class MujocoEnv(metaclass=EnvMeta):
 
     def render(self, mode='human', width=DEFAULT_SIZE, height=DEFAULT_SIZE, camera_name=None):
         if mode == 'rgb_array':
-            print(camera_name, self.model._camera_name2id)
-            # camera_id = self.model.camera_name2id(camera_name) if camera_name in self.model._camera_name2id else None
+            camera_id = self.mjpy_model.camera_name2id(camera_name) if camera_name in self.mjpy_model._camera_name2id else None
             self.get_viewer(mode).render(width, height, camera_id=camera_id)
             data = self.get_viewer(mode).read_pixels(width, height, depth=False)
             return data[::-1, :, :]
