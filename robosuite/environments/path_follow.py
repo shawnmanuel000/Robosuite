@@ -1,13 +1,18 @@
-from collections import OrderedDict
-import xml.etree.ElementTree as ET
+import os
 import numpy as np
+import pybullet as pb
+import xml.etree.ElementTree as ET
+from collections import OrderedDict
 
 from ..utils.transform_utils import convert_quat
 from ..robots import SingleArm
+from ..models import assets_root
 from ..models.arenas import TableArena
 from ..models.objects import BoxObject
 from ..models.tasks import TableTopTask, UniformRandomSampler
 from .robot_env import RobotEnv
+from ..controllers import get_pybullet_server, load_controller_config, controller_factory
+from ..controllers.ee_ik import PybulletServer
 
 
 class PathFollow(RobotEnv):
@@ -35,7 +40,7 @@ class PathFollow(RobotEnv):
         render_collision_mesh=False,
         render_visual_mesh=True,
         control_freq=10,
-        horizon=1000,
+        horizon=250,
         ignore_done=False,
         camera_names="agentview",
         camera_heights=256,
@@ -157,10 +162,10 @@ class PathFollow(RobotEnv):
             self.path_names.append(name)
         worldbody.append(path)
         self.range = 1.0
-        self.origin = np.array([-0.1, 0, 1])
-        self.size = np.maximum([0.25, 0.2, 0], 0.001)
+        self.origin = np.array([-0, 0, 1.0])
+        self.size = np.array([0.2, 0.2, 0])
         self.space = "box"
-        size = self.size[0] if self.space == "sphere" else self.size
+        size = self.size[0] if self.space == "sphere" else np.maximum(self.size, 0.001)
         size_str = lambda x: ' '.join([f'{p}' for p in x])
         space = f"<body name='space' pos='{size_str(self.origin)}'><geom conaffinity='0' group='1' contype='0' name='space' rgba='0.9 0.9 0.9 0.4' size='{size_str(size)}' type='{self.space}'/></body>"
         worldbody.append(ET.fromstring(space))
@@ -175,29 +180,22 @@ class PathFollow(RobotEnv):
         Resets simulation internal configurations.
         """
         super()._reset_internal()
-        origin = self.origin + xoffset*np.array([0, 0.25, 0])
+        origin = self.origin + xoffset*np.array([0, 0.2, 0])
         target_pos = origin + self.range*self.size*np.random.uniform(-1, 1, size=self.size.shape)
+        ef_to_pos = origin + self.range*self.size*np.random.uniform(-1, 1, size=self.size.shape)
+        offset = np.array([0,0,0.04]) * ((origin+self.size)[0]-ef_to_pos[0])/(2*self.size[0])
+        qpos = np.copy(self.init_qpos)
+        qpos[self.robots[0].inverse_controller.joint_index] = self.robots[0].inverse_controller.inverse_kinematics(ef_to_pos+offset, None)
+        qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.sim.model.nv)
         self.sim.model.body_pos[self.sim.model.body_names.index("target")] = target_pos
         self.sim.model.body_pos[self.sim.model.body_names.index("space")] = origin
-        ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
-        ef_to_pos = origin + self.range*self.size*np.random.uniform(-1, 1, size=self.size.shape)
-        num_steps = np.linalg.norm(ef_to_pos-ef_pos)/np.max(self.robots[0].controller.output_max)
-        for i in range(10*int(num_steps)): 
-            ef_from_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
-            ef_pos_diff = (ef_to_pos - ef_from_pos)
-            action = [*ef_pos_diff, 0]
-            for j in range(int(self.control_timestep / self.model_timestep)):
-                self._pre_action(action, policy_step=(j)==0)
-                self.sim.step()
+        self.set_state(qpos=qpos, qvel=qvel)
         target_pos = self.get_body_pos("target")
         ef_pos = self.sim.data.site_xpos[self.robots[0].eef_site_id]
         points = np.linspace(ef_pos, target_pos, len(self.path_names))
         path_indices = [self.sim.model.body_names.index(name) for name in self.path_names]
         for i,point in zip(path_indices, points):
             self.sim.model.body_pos[i] = point
-        qvel = self.init_qvel + np.random.uniform(low=-.005, high=.005, size=self.sim.model.nv)
-        self.set_state(qvel=qvel)
-        self.timestep = 0
         
     def _get_observation(self):
         """
@@ -217,7 +215,7 @@ class PathFollow(RobotEnv):
         if self.use_object_obs:
             path = [self.get_body_pos(name) for name in self.path_names]
             di["target_pos"] = path[-1]
-            di["task_state"] = np.concatenate([*path])
+            di["task_state"] = np.concatenate([*path, di["robot0_eef_pos"]])
         return di
 
     def _visualization(self):

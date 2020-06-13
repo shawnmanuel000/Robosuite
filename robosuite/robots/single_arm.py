@@ -38,6 +38,8 @@ class SingleArm(Robot):
         self.gripper_visualization = gripper_visualization
         self.control_freq = control_freq
 
+        self.inverse_controller_config = load_controller_config(default_controller="EE_IK")
+        
         self.gripper = None                                 # Gripper class
         self.gripper_joints = None                          # xml joint names for gripper
         self._ref_gripper_joint_pos_indexes = None          # xml gripper joint position indexes in mjsim
@@ -73,8 +75,21 @@ class SingleArm(Robot):
         self.controller_config["policy_freq"] = self.control_freq
         self.controller_config["ndim"] = len(self.robot_joints)
 
+        # self.inverse_controller_config.update({k:self.robots[0].controller_config[k] for k in ["robot_name","sim","eef_name","joint_indexes","actuator_range","policy_freq","ndim"]})
+        self.update_config(self.inverse_controller_config)
+
         # Instantiate the relevant controller
         self.controller = controller_factory(self.controller_config["type"], self.controller_config)
+        self.inverse_controller = controller_factory(self.inverse_controller_config["type"], self.inverse_controller_config)
+
+    def update_config(self, config):
+        config["robot_name"] = self.name
+        config["sim"] = self.sim
+        config["eef_name"] = self.robot_model.eef_name
+        config["joint_indexes"] = {"joints": self.joint_indexes, "qpos": self._ref_joint_pos_indexes, "qvel": self._ref_joint_vel_indexes}
+        config["actuator_range"] = self.torque_limits
+        config["policy_freq"] = self.control_freq
+        config["ndim"] = len(self.robot_joints)
 
     def load_model(self):
         """
@@ -111,6 +126,7 @@ class SingleArm(Robot):
                 self.sim.data.qpos[self._ref_gripper_joint_pos_indexes] = self.gripper.init_qpos
         # Update base pos / ori references in controller
         self.controller.update_base_pose(self.base_pos, self.base_ori)
+        self.inverse_controller.update_base_pose(self.base_pos, self.base_ori)
 
     def setup_references(self):
         """

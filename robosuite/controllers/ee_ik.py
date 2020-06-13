@@ -206,7 +206,7 @@ class EndEffectorInverseKinematicsController(JointVelocityController):
         )
 
         # import reference to the global pybullet server and load the urdfs
-        from robosuite.controllers import get_pybullet_server
+        from . import get_pybullet_server
         if load_urdf:
             self.ik_robot = p.loadURDF(fileName=self.robot_urdf,
                                        useFixedBase=1,
@@ -331,16 +331,12 @@ class EndEffectorInverseKinematicsController(JointVelocityController):
         Returns the current cartesian pose of the last joint of the ik robot with respect to the base frame as
         a (pos, orn) tuple where orn is a x-y-z-w quaternion
         """
-        eef_pos_in_world = np.array(p.getLinkState(self.ik_robot, self.bullet_ee_idx,
-                                                   physicsClientId=self.bullet_server_id)[0])
-        eef_orn_in_world = np.array(p.getLinkState(self.ik_robot, self.bullet_ee_idx,
-                                                   physicsClientId=self.bullet_server_id)[1])
+        eef_pos_in_world = np.array(p.getLinkState(self.ik_robot, self.bullet_ee_idx,physicsClientId=self.bullet_server_id)[0])
+        eef_orn_in_world = np.array(p.getLinkState(self.ik_robot, self.bullet_ee_idx,physicsClientId=self.bullet_server_id)[1])
         eef_pose_in_world = T.pose2mat((eef_pos_in_world, eef_orn_in_world))
 
-        base_pos_in_world = np.array(p.getBasePositionAndOrientation(self.ik_robot,
-                                                                     physicsClientId=self.bullet_server_id)[0])
-        base_orn_in_world = np.array(p.getBasePositionAndOrientation(self.ik_robot,
-                                                                     physicsClientId=self.bullet_server_id)[1])
+        base_pos_in_world = np.array(p.getBasePositionAndOrientation(self.ik_robot,physicsClientId=self.bullet_server_id)[0])
+        base_orn_in_world = np.array(p.getBasePositionAndOrientation(self.ik_robot,physicsClientId=self.bullet_server_id)[1])
         base_pose_in_world = T.pose2mat((base_pos_in_world, base_orn_in_world))
         world_pose_in_base = T.pose_inv(base_pose_in_world)
 

@@ -328,7 +328,8 @@ class MujocoEnv(metaclass=EnvMeta):
             self.viewer = None
 
     def get_body_pos(self, body_name):
-        pos = self.sim.data.get_body_xpos(body_name)
+        # pos = self.sim.data.get_body_xpos(body_name)
+        pos = self.sim.model.body_pos[self.sim.model.body_names.index(body_name)]
         return pos
 
     def set_state(self, qpos=None, qvel=None):

@@ -128,12 +128,9 @@ def controller_factory(name, params):
         global pybullet_server
         from .ee_ik import EndEffectorInverseKinematicsController
         if not pybullet_server:
-            from robosuite.controllers.ee_ik import PybulletServer
+            from .ee_ik import PybulletServer
             pybullet_server = PybulletServer()
-        return EndEffectorInverseKinematicsController(interpolator_pos=interpolator,
-                                                      interpolator_ori=ori_interpolator,
-                                                      bullet_server_id=pybullet_server.server_id,
-                                                      **params)
+        return EndEffectorInverseKinematicsController(interpolator_pos=interpolator, interpolator_ori=ori_interpolator, bullet_server_id=pybullet_server.server_id, **params)
 
     if name == "JOINT_VEL":
         return JointVelocityController(interpolator=interpolator, **params)
