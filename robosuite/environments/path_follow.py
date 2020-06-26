@@ -46,6 +46,7 @@ class PathFollow(RobotEnv):
         camera_heights=256,
         camera_widths=256,
         camera_depths=False,
+        height=0
         ):
         """
         Args:
@@ -78,6 +79,7 @@ class PathFollow(RobotEnv):
             camera_depths (bool or list of bool): True if rendering RGB-D, and RGB otherwise. Should either be single bool if same depth setting is to be used for all cameras or else it should be a list of the same length as "camera names" param.
         """
         # First, verify that only one robot is being inputted
+        self.region_height = height
         self._check_robot_configuration(robots)
         # settings for table top
         self.table_full_size = table_full_size
@@ -163,7 +165,7 @@ class PathFollow(RobotEnv):
         worldbody.append(path)
         self.range = 1.0
         self.origin = np.array([-0, 0, 1.0])
-        self.size = np.array([0.2, 0.2, 0])
+        self.size = np.array([0.2, 0.2+self.region_height, self.region_height])
         self.space = "box"
         size = self.size[0] if self.space == "sphere" else np.maximum(self.size, 0.001)
         size_str = lambda x: ' '.join([f'{p}' for p in x])
