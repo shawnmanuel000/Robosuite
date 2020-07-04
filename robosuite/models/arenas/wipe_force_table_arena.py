@@ -82,7 +82,7 @@ class WipeForceTableArena(Arena):
             squares_height = 0.1
             table_cte_size_x = 0.8
             table_cte_size_y = 1.0
-            square2 = BoxObject(size=[table_cte_size_x/2, table_cte_size_y/2,  squares_height/2 - 0.001], rgba=[0, 0,1, 1], density=1, friction=friction)
+            square2 = BoxObject(size=[table_cte_size_x/2, table_cte_size_y/2,  squares_height/2 - 0.001], rgba=[0.7, 0,7, 0.7], density=1, friction=friction)
             square_name2 = 'table_0_0'
             self.squares[square_name2] = square2
             collision_c = square2.get_collision(name=square_name2, site=True)

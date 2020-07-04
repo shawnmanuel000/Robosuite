@@ -3,6 +3,7 @@ from .environments.base import make
 from .environments.lift import Lift
 from .environments.path_follow import PathFollow
 from .environments.surface_wipe import SurfaceWipe
+from .environments.door_open import DoorOpen
 from .environments.two_arm_lift import TwoArmLift
 from .environments.stack import Stack
 from .environments.nut_assembly import NutAssembly

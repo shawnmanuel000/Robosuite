@@ -119,7 +119,7 @@ class SurfaceWipe(RobotEnv):
 		self.wiped_sensors = []
 		self.collisions = 0
 		self.f_excess = 0
-		self.unit_wiped_reward = 20
+		self.unit_wiped_reward = 10
 		self.distance_multiplier = 0.1
 		self.distance_th_multiplier = 0.1
 		self.pressure_threshold = 5
@@ -192,14 +192,13 @@ class SurfaceWipe(RobotEnv):
 				parts = sensor_name.split('_')
 				sensor_id = int(parts[1])
 				sensor_pos = np.array(self.sim.data.site_xpos[self.sim.model.site_name2id(self.model.arena.sensor_site_names[sensor_name])])
-				di['sensor' + str(sensor_id) + '_pos'] = sensor_pos
-				acc = np.concatenate([acc, di['sensor' + str(sensor_id) + '_pos']])
+				# di['sensor' + str(sensor_id) + '_pos'] = sensor_pos
+				acc = np.concatenate([acc, sensor_pos])
 				acc = np.concatenate([acc, [[0, 1][sensor_id in self.wiped_sensors]]])
 				# proprioception
-				di['gripper_to_sensor' + str(sensor_id)] = gripper_position - sensor_pos
-				acc = np.concatenate([acc, di['gripper_to_sensor' + str(sensor_id)]])
-			path = [(0,0,0)]
-			di["target_pos"] = path[-1]
+				# di['gripper_to_sensor' + str(sensor_id)] = gripper_position - sensor_pos
+				acc = np.concatenate([acc, gripper_position - sensor_pos])
+			di["target_pos"] = [0,0,0]
 			di["task_state"] = np.concatenate([acc, di["robot0_eef_pos"]])
 		return di
 

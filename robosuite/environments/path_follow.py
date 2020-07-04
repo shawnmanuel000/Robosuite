@@ -10,9 +10,9 @@ from ..models import assets_root
 from ..models.arenas import TableArena
 from ..models.objects import BoxObject
 from ..models.tasks import TableTopTask, UniformRandomSampler
-from .robot_env import RobotEnv
 from ..controllers import get_pybullet_server, load_controller_config, controller_factory
 from ..controllers.ee_ik import PybulletServer
+from .robot_env import RobotEnv
 
 
 class PathFollow(RobotEnv):
