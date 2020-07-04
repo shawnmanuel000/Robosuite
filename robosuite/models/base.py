@@ -29,6 +29,7 @@ class MujocoXML(object):
         self.actuator = self.create_default_element("actuator")
         self.asset = self.create_default_element("asset")
         self.equality = self.create_default_element("equality")
+        self.sensor = self.create_default_element("sensor")
         self.contact = self.create_default_element("contact")
         self.default = self.create_default_element("default")
         self.option = self.create_default_element("option")
@@ -78,6 +79,8 @@ class MujocoXML(object):
                 self.actuator.append(one_actuator)
             for one_equality in other.equality:
                 self.equality.append(one_equality)
+            for one_sensor in other.sensor:
+                self.sensor.append(one_sensor)
             for one_contact in other.contact:
                 self.contact.append(one_contact)
             for one_default in other.default:
@@ -152,7 +155,7 @@ class MujocoXML(object):
             names += self.get_element_names(child, element_type)
         return names
 
-    def add_prefix(self, prefix, tags=("body", "joint", "site", "geom", "camera", "actuator")):
+    def add_prefix(self, prefix, tags=("body", "joint", "site", "geom", "camera", "actuator", "sensor")):
         """
         Utility to add prefix to all body names to prevent name clashes
         Args:
@@ -167,6 +170,12 @@ class MujocoXML(object):
                 actuator.attrib["name"] = prefix + actuator.attrib["name"]
                 if "joint" in tags:
                     actuator.attrib["joint"] = prefix + actuator.attrib["joint"]
+        if "sensor" in tags:
+            tags.discard("sensor")
+            for sensor in self.sensor:
+                sensor.attrib["name"] = prefix + sensor.attrib["name"]
+                if "site" in tags:
+                    sensor.attrib["site"] = prefix + sensor.attrib["site"]
         if "body" in tags:
             for contact in self.contact:
                 contact.set("body1", prefix + contact.attrib["body1"])

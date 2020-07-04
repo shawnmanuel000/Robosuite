@@ -36,6 +36,7 @@ class Robot(object):
         self.name = robot_type                              # Specific robot to instantiate
         self.idn = idn                                      # Unique ID of this robot
         self.robot_model = None                             # object holding robot model-specific info
+        self.joint_limit_count = 0
 
         # Scaling of Gaussian initial noise applied to robot joints
         self.initialization_noise = initialization_noise if initialization_noise else 0.0
