@@ -40,7 +40,7 @@ class DoorOpen(RobotEnv):
 		render_camera="frontview",
 		render_collision_mesh=False,
 		render_visual_mesh=True,
-		control_freq=100,
+		control_freq=25,
 		horizon=250,
 		ignore_done=False,
 		camera_names="agentview",
@@ -109,21 +109,21 @@ class DoorOpen(RobotEnv):
 		self.ee_accel_penalty = 0
 		self.action_delta_penalty = 0
 		self.handle_reward = True
-		self.arm_collision_penalty = -10
+		self.arm_collision_penalty = -1
 
 		self.handle_final_reward = 1
 		self.handle_shaped_reward = 0.5
 		self.max_hinge_diff = 0.05
 		self.max_hinge_vel = 0.1
-		self.final_reward = 500
-		self.door_shaped_reward = 30
+		self.final_reward = 10
+		self.door_shaped_reward = 1
 		self.hinge_goal = 1.04
 		self.velocity_penalty = 10
 		self.change_door_friction = False
 		self.door_damping_max = 500
 		self.door_damping_min = 500
-		self.door_friction_max = 300
-		self.door_friction_min = 300
+		self.door_friction_max = 100
+		self.door_friction_min = 50
 		self.gripper_on_handle = True
 		self.use_door_state = True
 		self.table_origin = [0.50 + self.table_full_size[0] / 2, 0, 0]
@@ -134,7 +134,7 @@ class DoorOpen(RobotEnv):
 		self.door = DoorObject()
 		self.mujoco_objects = OrderedDict([("Door", self.door)])
 		if self.gripper_on_handle:
-			self._init_qpos = np.array([-0.01068642,-0.05599809,0.22389938,-1.81999415,-1.54907898,2.82220116,2.28768505])
+			self._init_qpos = np.array([-0.01068642,-0.05599809,0.22389938,-1.81999415,-1.54907898,2.72220116,2.28768505])
 		
 		self.model = DoorTask(self.mujoco_arena, [robot.robot_model for robot in self.robots], self.mujoco_objects)
 		if self.change_door_friction:
@@ -154,6 +154,7 @@ class DoorOpen(RobotEnv):
 		self.model.place_objects()
 		# reset joint positions
 		self.sim.data.qpos[self.robots[0]._ref_joint_pos_indexes] = np.array(self._init_qpos)
+		self.sim.data.qpos[self.robots[0]._ref_gripper_joint_pos_indexes] = np.array([0.001,-0.001])
 		self.sim.data.qpos[self.sim.model.joint_names.index("door_hinge")] = 0
 		self.timestep = 0
 		self.wiped_sensors = []
@@ -349,6 +350,7 @@ class DoorOpen(RobotEnv):
 			self.viewer._render_every_frame = True
 			self.viewer.cam.trackbodyid = 0
 			self.viewer.cam.azimuth = 270
-			self.viewer.cam.elevation = -15
+			self.viewer.cam.elevation = -90
+			self.viewer.cam.distance = 1
 			self.viewers[mode] = self.viewer
 		return self.viewer

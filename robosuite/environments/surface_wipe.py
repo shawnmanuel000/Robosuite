@@ -39,7 +39,7 @@ class SurfaceWipe(RobotEnv):
 		render_camera="frontview",
 		render_collision_mesh=False,
 		render_visual_mesh=True,
-		control_freq=100,
+		control_freq=50,
 		horizon=250,
 		ignore_done=False,
 		camera_names="agentview",
