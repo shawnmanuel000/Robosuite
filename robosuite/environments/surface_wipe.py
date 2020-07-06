@@ -39,7 +39,7 @@ class SurfaceWipe(RobotEnv):
 		render_camera="frontview",
 		render_collision_mesh=False,
 		render_visual_mesh=True,
-		control_freq=50,
+		control_freq=100,
 		horizon=250,
 		ignore_done=False,
 		camera_names="agentview",
@@ -115,7 +115,7 @@ class SurfaceWipe(RobotEnv):
 		self.line_width = 0.01
 		self.two_clusters = False
 		self.draw_line = True  # whether you want a line for sensors
-		self.num_sensors = 20
+		self.num_sensors = 10
 		self.wiped_sensors = []
 		self.collisions = 0
 		self.f_excess = 0
